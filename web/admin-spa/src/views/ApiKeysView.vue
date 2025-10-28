@@ -48,6 +48,23 @@
                 {{ deletedApiKeys.length }}
               </span>
             </button>
+            <button
+              :class="[
+                'whitespace-nowrap border-b-2 px-1 py-2 text-sm font-medium',
+                activeTab === 'redeems'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300'
+              ]"
+              @click="switchToRedeemsTab"
+            >
+              兑换码管理
+              <span
+                v-if="redeems.length > 0"
+                class="ml-2 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-900 dark:bg-purple-700 dark:text-purple-100"
+              >
+                {{ redeems.length }}
+              </span>
+            </button>
           </nav>
         </div>
 
@@ -227,6 +244,15 @@
                 <span class="relative">删除选中 ({{ selectedApiKeys.length }})</span>
               </button>
 
+              <!-- 创建兑换码按钮 -->
+              <button
+                class="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 px-5 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-purple-600 hover:to-purple-700 hover:shadow-lg sm:w-auto"
+                @click.stop="openCreateRedeemModal"
+              >
+                <i class="fas fa-gift"></i>
+                <span>创建兑换码</span>
+              </button>
+
               <!-- 创建按钮 -->
               <button
                 class="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg sm:w-auto"
@@ -296,6 +322,11 @@
                       class="w-[10%] min-w-[80px] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
                     >
                       标签
+                    </th>
+                    <th
+                      class="w-[12%] min-w-[100px] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                    >
+                      兑换码
                     </th>
                     <th
                       class="w-[6%] min-w-[60px] cursor-pointer px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600"
@@ -556,6 +587,16 @@
                             >无标签</span
                           >
                         </div>
+                      </td>
+                      <!-- 兑换码列 -->
+                      <td class="px-3 py-3">
+                        <code
+                          v-if="key.boundRedeemCode"
+                          class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700"
+                        >
+                          {{ key.boundRedeemCode }}
+                        </code>
+                        <span v-else class="text-xs text-gray-400">—</span>
                       </td>
                       <td class="whitespace-nowrap px-3 py-3">
                         <span
@@ -1859,6 +1900,148 @@
             </div>
           </div>
         </div>
+
+        <!-- 兑换码管理 Tab Panel -->
+        <div v-else-if="activeTab === 'redeems'" class="tab-panel">
+          <div v-if="redeemsLoading" class="py-12 text-center">
+            <div class="loading-spinner mx-auto mb-4" />
+            <p class="text-gray-500 dark:text-gray-400">正在加载兑换码...</p>
+          </div>
+
+          <div v-else-if="redeems.length === 0" class="py-12 text-center">
+            <div
+              class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-700"
+            >
+              <i class="fas fa-gift text-xl text-purple-400" />
+            </div>
+            <p class="text-lg text-gray-500 dark:text-gray-400">暂无兑换码</p>
+            <p class="mt-2 text-sm text-gray-400">创建的兑换码会出现在这里</p>
+          </div>
+
+          <!-- 兑换码表格 -->
+          <div v-else>
+            <div class="table-wrapper">
+              <div class="table-container">
+                <table class="w-full table-fixed">
+                  <thead class="bg-gray-50/80 backdrop-blur-sm dark:bg-gray-700/80">
+                    <tr>
+                      <th
+                        class="w-[20%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        兑换码
+                      </th>
+                      <th
+                        class="w-[15%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        API Key
+                      </th>
+                      <th
+                        class="w-[10%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        状态
+                      </th>
+                      <th
+                        class="w-[15%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        创建时间
+                      </th>
+                      <th
+                        class="w-[15%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        过期时间
+                      </th>
+                      <th
+                        class="w-[15%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        激活用户
+                      </th>
+                      <th
+                        class="w-[10%] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      >
+                        操作
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    class="divide-y divide-gray-200 bg-white dark:divide-gray-600 dark:bg-gray-800"
+                  >
+                    <tr
+                      v-for="redeem in redeems"
+                      :key="redeem.code"
+                      class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <td class="px-3 py-4 text-sm">
+                        <code
+                          class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700"
+                          >{{ redeem.code }}</code
+                        >
+                      </td>
+                      <td class="px-3 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {{ redeem.apiKeyName || 'N/A' }}
+                      </td>
+                      <td class="px-3 py-4 text-sm">
+                        <span
+                          :class="[
+                            'inline-flex rounded-full px-2 py-1 text-xs font-semibold',
+                            {
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
+                                redeem.status === 'used',
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
+                                redeem.status === 'unused',
+                              'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200':
+                                redeem.status === 'disabled',
+                              'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200':
+                                redeem.status === 'expired'
+                            }
+                          ]"
+                        >
+                          {{ getStatusText(redeem.status) }}
+                        </span>
+                      </td>
+                      <td class="px-3 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {{ formatDate(redeem.createdAt) }}
+                      </td>
+                      <td class="px-3 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {{ redeem.expiresAt ? formatDate(redeem.expiresAt) : '永不过期' }}
+                      </td>
+                      <td class="px-3 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {{ redeem.userUsername || '未激活' }}
+                      </td>
+                      <td class="px-3 py-4 text-sm">
+                        <div class="flex space-x-2">
+                          <button
+                            v-if="redeem.status === 'unused'"
+                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            title="禁用"
+                            @click="disableRedeem(redeem.code)"
+                          >
+                            <i class="fas fa-ban"></i>
+                          </button>
+                          <button
+                            v-if="redeem.status === 'disabled'"
+                            class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                            title="启用"
+                            @click="enableRedeem(redeem.code)"
+                          >
+                            <i class="fas fa-check"></i>
+                          </button>
+                          <button
+                            v-if="redeem.status === 'unused' || redeem.status === 'disabled'"
+                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            title="删除"
+                            @click="deleteRedeem(redeem.code)"
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1869,6 +2052,12 @@
       @batch-success="handleBatchCreateSuccess"
       @close="showCreateApiKeyModal = false"
       @success="handleCreateSuccess"
+    />
+
+    <CreateRedeemModal
+      v-if="showCreateRedeemModal"
+      @close="showCreateRedeemModal = false"
+      @success="handleRedeemCreateSuccess"
     />
 
     <EditApiKeyModal
@@ -1932,6 +2121,7 @@ import { useClientsStore } from '@/stores/clients'
 import { useAuthStore } from '@/stores/auth'
 import * as XLSX from 'xlsx-js-style'
 import CreateApiKeyModal from '@/components/apikeys/CreateApiKeyModal.vue'
+import CreateRedeemModal from '@/components/apikeys/CreateRedeemModal.vue'
 import EditApiKeyModal from '@/components/apikeys/EditApiKeyModal.vue'
 import RenewApiKeyModal from '@/components/apikeys/RenewApiKeyModal.vue'
 import NewApiKeyModal from '@/components/apikeys/NewApiKeyModal.vue'
@@ -1996,6 +2186,8 @@ const timeRangeDropdownOptions = computed(() => [
 const activeTab = ref('active')
 const deletedApiKeys = ref([])
 const deletedApiKeysLoading = ref(false)
+const redeems = ref([])
+const redeemsLoading = ref(false)
 const apiKeysSortBy = ref('periodCost')
 const apiKeysSortOrder = ref('desc')
 const expandedApiKeys = ref({})
@@ -2064,6 +2256,7 @@ const pageSizeOptions = [10, 20, 50, 100]
 
 // 模态框状态
 const showCreateApiKeyModal = ref(false)
+const showCreateRedeemModal = ref(false)
 const showEditApiKeyModal = ref(false)
 const showRenewApiKeyModal = ref(false)
 const showNewApiKeyModal = ref(false)
@@ -2400,7 +2593,19 @@ const loadApiKeys = async () => {
     const queryString = new URLSearchParams(params).toString()
     const data = await apiClient.get(`/admin/api-keys?${queryString}`)
     if (data.success) {
-      apiKeys.value = data.data || []
+      const list = data.data || []
+      // 兼容后端返回的 tags 为字符串(JSON) 的情况
+      apiKeys.value = list.map((k) => {
+        const key = { ...k }
+        if (typeof key.tags === 'string') {
+          try {
+            key.tags = JSON.parse(key.tags)
+          } catch (_) {
+            key.tags = []
+          }
+        }
+        return key
+      })
       // 更新可用标签列表
       const tagsSet = new Set()
       apiKeys.value.forEach((key) => {
@@ -2430,6 +2635,94 @@ const loadDeletedApiKeys = async () => {
     showToast('加载已删除的 API Keys 失败', 'error')
   } finally {
     deletedApiKeysLoading.value = false
+  }
+}
+
+// 切换到兑换码标签页
+const switchToRedeemsTab = () => {
+  activeTab.value = 'redeems'
+  loadRedeems()
+}
+
+// 加载兑换码列表
+const loadRedeems = async () => {
+  redeemsLoading.value = true
+  try {
+    const res = await apiClient.get('/admin/redeems')
+    if (res?.success) {
+      redeems.value = res.data || []
+    } else {
+      throw new Error(res?.message || '获取兑换码失败')
+    }
+  } catch (error) {
+    console.error('加载兑换码失败:', error)
+    showToast('加载兑换码失败', 'error')
+    redeems.value = []
+  } finally {
+    redeemsLoading.value = false
+  }
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const statusMap = {
+    unused: '未使用',
+    used: '已使用',
+    disabled: '已禁用',
+    expired: '已过期'
+  }
+  return statusMap[status] || status
+}
+
+// 禁用兑换码
+const disableRedeem = async (code) => {
+  try {
+    const response = await apiClient.put(`/admin/redeems/${code}`, { status: 'disabled' })
+    if (response.data?.success) {
+      showToast('兑换码已禁用', 'success')
+      await loadRedeems()
+    } else {
+      throw new Error(response.data?.message || '禁用失败')
+    }
+  } catch (error) {
+    console.error('禁用兑换码失败:', error)
+    showToast('禁用兑换码失败', 'error')
+  }
+}
+
+// 启用兑换码
+const enableRedeem = async (code) => {
+  try {
+    const response = await apiClient.put(`/admin/redeems/${code}`, { status: 'unused' })
+    if (response.data?.success) {
+      showToast('兑换码已启用', 'success')
+      await loadRedeems()
+    } else {
+      throw new Error(response.data?.message || '启用失败')
+    }
+  } catch (error) {
+    console.error('启用兑换码失败:', error)
+    showToast('启用兑换码失败', 'error')
+  }
+}
+
+// 删除兑换码
+const deleteRedeem = async (code) => {
+  if (!confirm('确定要删除这个兑换码吗？此操作不可撤销。')) {
+    return
+  }
+
+  try {
+    const response = await apiClient.delete(`/admin/redeems/${code}`)
+    if (response.data?.success) {
+      showToast('兑换码已删除', 'success')
+      await loadRedeems()
+    } else {
+      throw new Error(response.data?.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除兑换码失败:', error)
+    showToast('删除兑换码失败', 'error')
   }
 }
 
@@ -3232,6 +3525,11 @@ const openCreateApiKeyModal = async () => {
   showCreateApiKeyModal.value = true
 }
 
+// 打开创建兑换码模态框
+const openCreateRedeemModal = () => {
+  showCreateRedeemModal.value = true
+}
+
 // 打开编辑模态框
 const openEditApiKeyModal = async (apiKey) => {
   // 重新加载账号数据，确保显示最新的专属账号
@@ -3252,6 +3550,14 @@ const handleCreateSuccess = (data) => {
   newApiKeyData.value = data
   showNewApiKeyModal.value = true
   loadApiKeys()
+}
+
+// 处理兑换码创建成功
+const handleRedeemCreateSuccess = () => {
+  showCreateRedeemModal.value = false
+  loadApiKeys() // 重新加载API Keys列表
+  loadRedeems() // 重新加载兑换码列表
+  showToast('兑换码创建成功！', 'success')
 }
 
 // 处理批量创建成功

@@ -100,6 +100,13 @@ class ApiKeyService {
       icon = '' // 新增：图标（base64编码）
     } = options
 
+    // 检查名称是否已存在
+    const existingKeys = await redis.getAllApiKeys()
+    const nameExists = existingKeys.some(key => key.name === name)
+    if (nameExists) {
+      throw new Error(`API Key名称 "${name}" 已存在，请使用不同的名称`)
+    }
+
     // 生成简单的API Key (64字符十六进制)
     const apiKey = `${this.prefix}${this._generateSecretKey()}`
     const keyId = uuidv4()
@@ -578,6 +585,10 @@ class ApiKeyService {
         } catch (e) {
           key.tags = []
         }
+        
+        // 添加绑定的兑换码字段
+        key.boundRedeemCode = key.boundRedeemCode || null
+        
         // 不暴露已弃用字段
         if (Object.prototype.hasOwnProperty.call(key, 'ccrAccountId')) {
           delete key.ccrAccountId
@@ -676,7 +687,8 @@ class ApiKeyService {
         'tags',
         'userId', // 新增：用户ID（所有者变更）
         'userUsername', // 新增：用户名（所有者变更）
-        'createdBy' // 新增：创建者（所有者变更）
+        'createdBy', // 新增：创建者（所有者变更）
+        'boundRedeemCode' // 新增：绑定的兑换码
       ]
       const updatedData = { ...keyData }
 

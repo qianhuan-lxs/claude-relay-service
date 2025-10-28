@@ -261,6 +261,8 @@ class Application {
       this.app.use('/claude', apiRoutes) // /claude 路由别名，与 /api 功能相同
       this.app.use('/admin', adminRoutes)
       this.app.use('/users', userRoutes)
+      // 客户端认证路由（登录/注册等）
+      this.app.use('/api/client/auth', require('./routes/clientAuthRoutes'))
       // 使用 web 路由（包含 auth 和页面重定向）
       this.app.use('/web', webRoutes)
       this.app.use('/apiStats', apiStatsRoutes)
@@ -276,10 +278,52 @@ class Application {
       this.app.use('/azure', azureOpenaiRoutes)
       this.app.use('/admin/webhook', webhookRoutes)
 
-      // 🏠 根路径重定向到新版管理界面
-      this.app.get('/', (req, res) => {
-        res.redirect('/admin-next/api-stats')
-      })
+      // 🎨 客户端 SPA 静态文件服务（必须在其他路由之前）
+      const clientSpaPath = path.join(__dirname, '..', 'web', 'client-spa', 'dist')
+      if (fs.existsSync(clientSpaPath)) {
+        // 静态资源服务（/assets/* 等）
+        this.app.use(
+          express.static(clientSpaPath, {
+            setHeaders: (res, file) => {
+              if (file.endsWith('.js') || file.endsWith('.css')) {
+                res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+              } else if (file.endsWith('.html')) {
+                res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+              }
+            }
+          })
+        )
+
+        // 为客户端路由返回 index.html（排除后端前缀）
+        this.app.get('*', (req, res, next) => {
+          if (
+            req.path.startsWith('/admin') ||
+            req.path.startsWith('/api') ||
+            req.path.startsWith('/admin-next') ||
+            req.path.startsWith('/claude') ||
+            req.path.startsWith('/gemini') ||
+            req.path.startsWith('/openai') ||
+            req.path.startsWith('/droid') ||
+            req.path.startsWith('/azure') ||
+            req.path.startsWith('/users') ||
+            req.path.startsWith('/web') ||
+            req.path.startsWith('/apiStats') ||
+            req.path.startsWith('/health') ||
+            req.path.startsWith('/metrics')
+          ) {
+            return next()
+          }
+          res.sendFile(path.join(clientSpaPath, 'index.html'))
+        })
+
+        logger.info('✅ Client SPA static files mounted at /')
+      } else {
+        logger.warn('⚠️ Client SPA dist directory not found, skipping client routes')
+        // 🏠 根路径重定向到新版管理界面（fallback）
+        this.app.get('/', (req, res) => {
+          res.redirect('/admin-next/api-stats')
+        })
+      }
 
       // 🏥 增强的健康检查端点
       this.app.get('/health', async (req, res) => {
