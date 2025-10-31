@@ -27,7 +27,7 @@ const authenticateClient = async (req, res, next) => {
 
     // Validate session token
     const session = await clientAuthService.validateSession(token)
-    
+
     if (!session) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -63,7 +63,7 @@ const authenticateClient = async (req, res, next) => {
 const optionalAuthenticateClient = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // No token provided, continue without authentication
       req.clientUser = null
@@ -81,7 +81,7 @@ const optionalAuthenticateClient = async (req, res, next) => {
 
     // Validate session token
     const session = await clientAuthService.validateSession(token)
-    
+
     if (session) {
       req.clientUser = {
         id: session.userId,

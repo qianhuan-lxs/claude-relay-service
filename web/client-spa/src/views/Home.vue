@@ -12,7 +12,7 @@
         <div class="hidden md:flex items-center space-x-8">
           <a href="#features" class="text-gray-300 hover:text-white transition-colors">功能</a>
           <a href="#pricing" class="text-gray-300 hover:text-white transition-colors">定价</a>
-          <a href="#docs" class="text-gray-300 hover:text-white transition-colors">文档</a>
+          <router-link to="/docs" class="text-gray-300 hover:text-white transition-colors">教程</router-link>
         </div>
         <div class="flex items-center space-x-4">
           <router-link to="/auth/login" class="text-gray-300 hover:text-white transition-colors">登录</router-link>

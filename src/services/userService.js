@@ -107,12 +107,56 @@ class UserService {
   // 👤 通过ID获取用户
   async getUserById(userId, calculateUsage = true) {
     try {
-      const userData = await redis.get(`${this.userPrefix}${userId}`)
+      // 先尝试查找 LDAP 用户
+      let userData = await redis.get(`${this.userPrefix}${userId}`)
+      let isClientUser = false
+
+      // 如果没找到，尝试查找客户端注册的用户
+      if (!userData) {
+        userData = await redis.get(`client_user:${userId}`)
+        isClientUser = true
+      }
+
       if (!userData) {
         return null
       }
 
-      const user = JSON.parse(userData)
+      let user = JSON.parse(userData)
+
+      // 如果是客户端用户，转换为统一格式
+      if (isClientUser) {
+        user = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName || user.username,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          role: user.role || 'user',
+          isActive: user.isActive !== false,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt || user.createdAt,
+          lastLoginAt: user.lastLoginAt || null,
+          apiKeyCount: 0,
+          totalUsage: {
+            requests: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalCost: 0
+          }
+        }
+      }
+
+      // 确保必要的字段存在
+      if (!user.role) {
+        user.role = 'user'
+      }
+      if (typeof user.isActive === 'undefined') {
+        user.isActive = true
+      }
+      if (!user.displayName) {
+        user.displayName = user.username
+      }
 
       // Calculate totalUsage by aggregating user's API keys usage (if requested)
       if (calculateUsage) {
@@ -193,41 +237,96 @@ class UserService {
     try {
       const client = redis.getClientSafe()
       const { page = 1, limit = 20, role, isActive } = options
-      const pattern = `${this.userPrefix}*`
-      const keys = await client.keys(pattern)
+
+      // 同时查找 LDAP 用户和客户端注册的用户
+      const ldapKeys = await client.keys(`${this.userPrefix}*`)
+      const clientKeys = await client.keys(`client_user:*`)
+      const allKeys = [...ldapKeys, ...clientKeys]
 
       const users = []
-      for (const key of keys) {
-        const userData = await client.get(key)
-        if (userData) {
-          const user = JSON.parse(userData)
-
-          // 应用过滤条件
-          if (role && user.role !== role) {
-            continue
-          }
-          if (typeof isActive === 'boolean' && user.isActive !== isActive) {
+      for (const key of allKeys) {
+        try {
+          // 只处理字符串类型的 key
+          const type = await client.type(key)
+          if (type !== 'string') {
+            logger.debug(`⚠️ Skipping key ${key} with type ${type}`)
             continue
           }
 
-          // Calculate dynamic usage stats for each user
-          try {
-            const usageStats = await this.calculateUserUsageStats(user.id)
-            user.totalUsage = usageStats.totalUsage
-            user.apiKeyCount = usageStats.apiKeyCount
-          } catch (error) {
-            logger.error(`❌ Error calculating usage for user ${user.id}:`, error)
-            // Fallback to stored values
-            user.totalUsage = user.totalUsage || {
-              requests: 0,
-              inputTokens: 0,
-              outputTokens: 0,
-              totalCost: 0
+          const userData = await client.get(key)
+          if (userData) {
+            let user = JSON.parse(userData)
+
+            // 处理客户端用户：转换为统一格式
+            if (key.startsWith('client_user:')) {
+              user = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                displayName: user.displayName || user.username,
+                firstName: user.firstName || '',
+                lastName: user.lastName || '',
+                role: user.role || 'user', // 客户端用户默认为 'user'
+                isActive: user.isActive !== false,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt || user.createdAt,
+                lastLoginAt: user.lastLoginAt || null,
+                apiKeyCount: 0,
+                totalUsage: {
+                  requests: 0,
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  totalCost: 0
+                }
+              }
             }
-            user.apiKeyCount = user.apiKeyCount || 0
-          }
 
-          users.push(user)
+            // 确保必要的字段存在
+            if (!user.role) {
+              user.role = 'user'
+            }
+            if (typeof user.isActive === 'undefined') {
+              user.isActive = true
+            }
+            if (!user.displayName) {
+              user.displayName = user.username
+            }
+
+            // 应用过滤条件
+            if (role && user.role !== role) {
+              continue
+            }
+            if (typeof isActive === 'boolean' && user.isActive !== isActive) {
+              continue
+            }
+
+            // Calculate dynamic usage stats for each user
+            try {
+              const usageStats = await this.calculateUserUsageStats(user.id)
+              user.totalUsage = usageStats.totalUsage
+              user.apiKeyCount = usageStats.apiKeyCount
+            } catch (error) {
+              logger.error(`❌ Error calculating usage for user ${user.id}:`, error)
+              // Fallback to stored values
+              user.totalUsage = user.totalUsage || {
+                requests: 0,
+                inputTokens: 0,
+                outputTokens: 0,
+                totalCost: 0
+              }
+              user.apiKeyCount = user.apiKeyCount || 0
+            }
+
+            users.push(user)
+          }
+        } catch (error) {
+          // 跳过类型不匹配或解析错误的 key
+          if (error.message && error.message.includes('WRONGTYPE')) {
+            logger.debug(`⚠️ Skipping key ${key} due to wrong type: ${error.message}`)
+          } else {
+            logger.error(`❌ Error processing user key ${key}:`, error)
+          }
+          continue
         }
       }
 
@@ -455,8 +554,11 @@ class UserService {
   async getUserStats() {
     try {
       const client = redis.getClientSafe()
-      const pattern = `${this.userPrefix}*`
-      const keys = await client.keys(pattern)
+
+      // 同时查找 LDAP 用户和客户端注册的用户
+      const ldapKeys = await client.keys(`${this.userPrefix}*`)
+      const clientKeys = await client.keys(`client_user:*`)
+      const allKeys = [...ldapKeys, ...clientKeys]
 
       const stats = {
         totalUsers: 0,
@@ -472,39 +574,83 @@ class UserService {
         }
       }
 
-      for (const key of keys) {
-        const userData = await client.get(key)
-        if (userData) {
-          const user = JSON.parse(userData)
-          stats.totalUsers++
-
-          if (user.isActive) {
-            stats.activeUsers++
+      for (const key of allKeys) {
+        try {
+          // 只处理字符串类型的 key
+          const type = await client.type(key)
+          if (type !== 'string') {
+            logger.debug(`⚠️ Skipping key ${key} with type ${type} in stats`)
+            continue
           }
 
-          if (user.role === 'admin') {
-            stats.adminUsers++
+          const userData = await client.get(key)
+          if (userData) {
+            let user = JSON.parse(userData)
+
+            // 处理客户端用户：转换为统一格式
+            if (key.startsWith('client_user:')) {
+              user = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role || 'user', // 客户端用户默认为 'user'
+                isActive: user.isActive !== false,
+                apiKeyCount: 0,
+                totalUsage: {
+                  requests: 0,
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  totalCost: 0
+                }
+              }
+            }
+
+            // 确保必要的字段存在
+            if (!user.role) {
+              user.role = 'user'
+            }
+            if (typeof user.isActive === 'undefined') {
+              user.isActive = true
+            }
+
+            stats.totalUsers++
+
+            if (user.isActive) {
+              stats.activeUsers++
+            }
+
+            if (user.role === 'admin') {
+              stats.adminUsers++
+            } else {
+              stats.regularUsers++
+            }
+
+            // Calculate dynamic usage stats for each user
+            try {
+              const usageStats = await this.calculateUserUsageStats(user.id)
+              stats.totalApiKeys += usageStats.apiKeyCount
+              stats.totalUsage.requests += usageStats.totalUsage.requests
+              stats.totalUsage.inputTokens += usageStats.totalUsage.inputTokens
+              stats.totalUsage.outputTokens += usageStats.totalUsage.outputTokens
+              stats.totalUsage.totalCost += usageStats.totalUsage.totalCost
+            } catch (error) {
+              logger.error(`❌ Error calculating usage for user ${user.id} in stats:`, error)
+              // Fallback to stored values if calculation fails
+              stats.totalApiKeys += user.apiKeyCount || 0
+              stats.totalUsage.requests += user.totalUsage?.requests || 0
+              stats.totalUsage.inputTokens += user.totalUsage?.inputTokens || 0
+              stats.totalUsage.outputTokens += user.totalUsage?.outputTokens || 0
+              stats.totalUsage.totalCost += user.totalUsage?.totalCost || 0
+            }
+          }
+        } catch (error) {
+          // 跳过类型不匹配或解析错误的 key
+          if (error.message && error.message.includes('WRONGTYPE')) {
+            logger.debug(`⚠️ Skipping key ${key} due to wrong type in stats: ${error.message}`)
           } else {
-            stats.regularUsers++
+            logger.error(`❌ Error processing user key ${key} in stats:`, error)
           }
-
-          // Calculate dynamic usage stats for each user
-          try {
-            const usageStats = await this.calculateUserUsageStats(user.id)
-            stats.totalApiKeys += usageStats.apiKeyCount
-            stats.totalUsage.requests += usageStats.totalUsage.requests
-            stats.totalUsage.inputTokens += usageStats.totalUsage.inputTokens
-            stats.totalUsage.outputTokens += usageStats.totalUsage.outputTokens
-            stats.totalUsage.totalCost += usageStats.totalUsage.totalCost
-          } catch (error) {
-            logger.error(`❌ Error calculating usage for user ${user.id} in stats:`, error)
-            // Fallback to stored values if calculation fails
-            stats.totalApiKeys += user.apiKeyCount || 0
-            stats.totalUsage.requests += user.totalUsage?.requests || 0
-            stats.totalUsage.inputTokens += user.totalUsage?.inputTokens || 0
-            stats.totalUsage.outputTokens += user.totalUsage?.outputTokens || 0
-            stats.totalUsage.totalCost += user.totalUsage?.totalCost || 0
-          }
+          continue
         }
       }
 

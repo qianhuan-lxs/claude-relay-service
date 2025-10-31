@@ -3,12 +3,25 @@
     <!-- Header -->
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">User Management</h1>
-        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-          Manage users, their API keys, and view usage statistics
-        </p>
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">用户管理</h1>
+        <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">管理用户、API Keys 和使用统计</p>
       </div>
-      <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+      <div class="mt-4 space-x-3 sm:ml-16 sm:mt-0 sm:flex-none">
+        <button
+          class="inline-flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          :disabled="loading"
+          @click="showCreateModal = true"
+        >
+          <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M12 4v16m8-8H4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+            />
+          </svg>
+          创建用户
+        </button>
         <button
           class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 sm:w-auto"
           :disabled="loading"
@@ -22,7 +35,7 @@
               stroke-width="2"
             />
           </svg>
-          Refresh
+          刷新
         </button>
       </div>
     </div>
@@ -50,7 +63,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Total Users
+                  总用户数
                 </dt>
                 <dd class="text-lg font-medium text-gray-900 dark:text-white">
                   {{ userStats?.totalUsers || 0 }}
@@ -82,7 +95,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Active Users
+                  活跃用户
                 </dt>
                 <dd class="text-lg font-medium text-gray-900 dark:text-white">
                   {{ userStats?.activeUsers || 0 }}
@@ -114,7 +127,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Total API Keys
+                  总 API Keys
                 </dt>
                 <dd class="text-lg font-medium text-gray-900 dark:text-white">
                   {{ userStats?.totalApiKeys || 0 }}
@@ -146,7 +159,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Total Cost
+                  总消费
                 </dt>
                 <dd class="text-lg font-medium text-gray-900 dark:text-white">
                   ${{ (userStats?.totalUsage?.totalCost || 0).toFixed(4) }}
@@ -184,7 +197,7 @@
                 <input
                   v-model="searchQuery"
                   class="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
-                  placeholder="Search users..."
+                  placeholder="搜索用户..."
                   type="search"
                   @input="debouncedSearch"
                 />
@@ -198,9 +211,9 @@
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
                 @change="loadUsers"
               >
-                <option value="">All Roles</option>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
+                <option value="">所有角色</option>
+                <option value="user">普通用户</option>
+                <option value="admin">管理员</option>
               </select>
             </div>
 
@@ -211,9 +224,9 @@
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
                 @change="loadUsers"
               >
-                <option value="">All Status</option>
-                <option value="true">Active</option>
-                <option value="false">Disabled</option>
+                <option value="">所有状态</option>
+                <option value="true">启用</option>
+                <option value="false">禁用</option>
               </select>
             </div>
           </div>
@@ -225,9 +238,9 @@
     <div class="overflow-hidden bg-white shadow dark:bg-gray-800 sm:rounded-md">
       <div class="border-b border-gray-200 px-4 py-5 dark:border-gray-700 sm:px-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-          Users
+          用户列表
           <span v-if="!loading" class="text-sm text-gray-500 dark:text-gray-400"
-            >({{ filteredUsers.length }} of {{ users.length }})</span
+            >({{ filteredUsers.length }} / {{ users.length }})</span
           >
         </h3>
       </div>
@@ -254,7 +267,7 @@
             fill="currentColor"
           ></path>
         </svg>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading users...</p>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">加载中...</p>
       </div>
 
       <!-- Users List -->
@@ -299,7 +312,7 @@
                           : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                       ]"
                     >
-                      {{ user.isActive ? 'Active' : 'Disabled' }}
+                      {{ user.isActive ? '启用' : '禁用' }}
                     </span>
                     <span
                       :class="[
@@ -309,7 +322,7 @@
                           : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                       ]"
                     >
-                      {{ user.role }}
+                      {{ user.role === 'admin' ? '管理员' : '普通用户' }}
                     </span>
                   </div>
                 </div>
@@ -318,31 +331,29 @@
                 >
                   <span>@{{ user.username }}</span>
                   <span v-if="user.email">{{ user.email }}</span>
-                  <span>{{ user.apiKeyCount || 0 }} API keys</span>
-                  <span v-if="user.lastLoginAt"
-                    >Last login: {{ formatDate(user.lastLoginAt) }}</span
-                  >
-                  <span v-else>Never logged in</span>
+                  <span>{{ user.apiKeyCount || 0 }} 个 API Keys</span>
+                  <span v-if="user.lastLoginAt">最后登录：{{ formatDate(user.lastLoginAt) }}</span>
+                  <span v-else>从未登录</span>
                 </div>
                 <div
                   v-if="user.totalUsage"
                   class="mt-1 flex items-center space-x-4 text-xs text-gray-400 dark:text-gray-500"
                 >
-                  <span>{{ formatNumber(user.totalUsage.requests || 0) }} requests</span>
-                  <span>${{ (user.totalUsage.totalCost || 0).toFixed(4) }} total cost</span>
+                  <span>{{ formatNumber(user.totalUsage.requests || 0) }} 次请求</span>
+                  <span>总消费 ${{ (user.totalUsage.totalCost || 0).toFixed(4) }}</span>
                 </div>
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <!-- View Usage Stats -->
+              <!-- View Detail -->
               <button
                 class="inline-flex items-center rounded border border-transparent p-1 text-gray-400 hover:text-blue-600"
-                title="View Usage Stats"
-                @click="viewUserStats(user)"
+                title="查看详情"
+                @click="viewUserDetail(user)"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
@@ -354,7 +365,7 @@
               <button
                 class="inline-flex items-center rounded border border-transparent p-1 text-gray-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="user.apiKeyCount === 0"
-                title="Disable All API Keys"
+                title="禁用所有 API Keys"
                 @click="disableUserApiKeys(user)"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,7 +386,7 @@
                     ? 'text-gray-400 hover:text-red-600'
                     : 'text-gray-400 hover:text-green-600'
                 ]"
-                :title="user.isActive ? 'Disable User' : 'Enable User'"
+                :title="user.isActive ? '禁用用户' : '启用用户'"
                 @click="toggleUserStatus(user)"
               >
                 <svg
@@ -405,7 +416,7 @@
               <!-- Change Role -->
               <button
                 class="inline-flex items-center rounded border border-transparent p-1 text-gray-400 hover:text-purple-600"
-                title="Change Role"
+                title="修改角色"
                 @click="changeUserRole(user)"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -437,11 +448,9 @@
             stroke-width="2"
           />
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No users found</h3>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">未找到用户</h3>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {{
-            searchQuery ? 'No users match your search criteria.' : 'No users have been created yet.'
-          }}
+          {{ searchQuery ? '没有匹配搜索条件的用户。' : '还没有创建任何用户。' }}
         </p>
       </div>
     </div>
@@ -451,6 +460,20 @@
       :show="showStatsModal"
       :user="selectedUser"
       @close="showStatsModal = false"
+    />
+
+    <!-- Create User Modal -->
+    <CreateUserModal
+      :show="showCreateModal"
+      @close="showCreateModal = false"
+      @created="handleUserCreated"
+    />
+
+    <!-- User Detail Modal -->
+    <UserDetailModal
+      :show="showDetailModal"
+      :user="selectedUser"
+      @close="showDetailModal = false"
     />
 
     <!-- Confirm Modals -->
@@ -482,6 +505,8 @@ import { debounce } from 'lodash-es'
 import UserUsageStatsModal from '@/components/admin/UserUsageStatsModal.vue'
 import ChangeRoleModal from '@/components/admin/ChangeRoleModal.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import CreateUserModal from '@/components/admin/CreateUserModal.vue'
+import UserDetailModal from '@/components/admin/UserDetailModal.vue'
 
 const loading = ref(true)
 const users = ref([])
@@ -493,6 +518,8 @@ const selectedStatus = ref('')
 const showStatsModal = ref(false)
 const showConfirmModal = ref(false)
 const showRoleModal = ref(false)
+const showCreateModal = ref(false)
+const showDetailModal = ref(false)
 const selectedUser = ref(null)
 
 const confirmAction = ref({
@@ -542,7 +569,7 @@ const formatNumber = (num) => {
 
 const formatDate = (dateString) => {
   if (!dateString) return null
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -577,7 +604,7 @@ const loadUsers = async () => {
     }
   } catch (error) {
     console.error('Failed to load users:', error)
-    showToast('Failed to load users', 'error')
+    showToast('加载用户失败', 'error')
   } finally {
     loading.value = false
   }
@@ -587,19 +614,22 @@ const debouncedSearch = debounce(() => {
   // Search is handled by computed property
 }, 300)
 
-const viewUserStats = (user) => {
+// 仅保留详情弹窗；使用统计在详情内的 usage 标签展示
+
+// 打开详情弹窗（含API Keys/兑换码/使用统计）
+const viewUserDetail = (user) => {
   selectedUser.value = user
-  showStatsModal.value = true
+  showDetailModal.value = true
 }
 
 const toggleUserStatus = (user) => {
   selectedUser.value = user
   confirmAction.value = {
-    title: user.isActive ? 'Disable User' : 'Enable User',
+    title: user.isActive ? '禁用用户' : '启用用户',
     message: user.isActive
-      ? `Are you sure you want to disable user "${user.username}"? This will prevent them from logging in.`
-      : `Are you sure you want to enable user "${user.username}"?`,
-    confirmText: user.isActive ? 'Disable' : 'Enable',
+      ? `确定要禁用用户 "${user.username}" 吗？这将阻止他们登录。`
+      : `确定要启用用户 "${user.username}" 吗？`,
+    confirmText: user.isActive ? '禁用' : '启用',
     confirmClass: user.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700',
     action: 'toggleStatus'
   }
@@ -611,9 +641,9 @@ const disableUserApiKeys = (user) => {
 
   selectedUser.value = user
   confirmAction.value = {
-    title: 'Disable All API Keys',
-    message: `Are you sure you want to disable all ${user.apiKeyCount} API keys for user "${user.username}"? This will prevent them from using the service.`,
-    confirmText: 'Disable Keys',
+    title: '禁用所有 API Keys',
+    message: `确定要禁用用户 "${user.username}" 的所有 ${user.apiKeyCount} 个 API Keys 吗？这将阻止他们使用服务。`,
+    confirmText: '禁用',
     confirmClass: 'bg-red-600 hover:bg-red-700',
     action: 'disableKeys'
   }
@@ -640,19 +670,19 @@ const handleConfirmAction = async () => {
         if (userIndex !== -1) {
           users.value[userIndex].isActive = !user.isActive
         }
-        showToast(`User ${user.isActive ? 'disabled' : 'enabled'} successfully`, 'success')
+        showToast(`用户已${user.isActive ? '禁用' : '启用'}`, 'success')
       }
     } else if (action === 'disableKeys') {
       const response = await apiClient.post(`/users/${user.id}/disable-keys`)
 
       if (response.success) {
-        showToast(`Disabled ${response.disabledCount} API keys`, 'success')
+        showToast(`已禁用 ${response.disabledCount} 个 API Keys`, 'success')
         await loadUsers() // Refresh to get updated counts
       }
     }
   } catch (error) {
     console.error(`Failed to ${action}:`, error)
-    showToast(`Failed to ${action}`, 'error')
+    showToast(`操作失败：${action === 'toggleStatus' ? '更新用户状态' : '禁用 API Keys'}`, 'error')
   } finally {
     showConfirmModal.value = false
     selectedUser.value = null
@@ -662,6 +692,11 @@ const handleConfirmAction = async () => {
 const handleUserUpdated = () => {
   showRoleModal.value = false
   selectedUser.value = null
+  loadUsers()
+}
+
+const handleUserCreated = () => {
+  showCreateModal.value = false
   loadUsers()
 }
 

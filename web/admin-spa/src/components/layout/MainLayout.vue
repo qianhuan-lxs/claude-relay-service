@@ -22,13 +22,11 @@
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import AppHeader from './AppHeader.vue'
 import TabBar from './TabBar.vue'
 
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
 
 // 根据路由设置当前激活的标签
 const activeTab = ref('dashboard')
@@ -39,13 +37,9 @@ const tabRouteMap = computed(() => {
     dashboard: '/dashboard',
     apiKeys: '/api-keys',
     accounts: '/accounts',
+    userManagement: '/user-management',
     tutorial: '/tutorial',
     settings: '/settings'
-  }
-
-  // 只有在 LDAP 启用时才包含用户管理路由
-  if (authStore.oemSettings?.ldapEnabled) {
-    baseMap.userManagement = '/user-management'
   }
 
   return baseMap

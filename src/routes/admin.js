@@ -793,7 +793,8 @@ router.post('/api-keys', authenticateAdmin, async (req, res) => {
 // 🎟️ 兑换码：创建（预创建 API Key 并返回兑换码）
 router.post('/redeems', authenticateAdmin, async (req, res) => {
   try {
-    const { name, description, expiresAt, activationDays, activationUnit, expirationMode, notes } = req.body || {}
+    const { name, description, expiresAt, activationDays, activationUnit, expirationMode, notes } =
+      req.body || {}
     const redeemService = require('../services/redeemService')
     const created = await redeemService.createRedeemWithApiKey({
       name,
@@ -808,7 +809,9 @@ router.post('/redeems', authenticateAdmin, async (req, res) => {
     return res.json({ success: true, data: created })
   } catch (error) {
     logger.error('❌ Failed to create redeem code:', error)
-    return res.status(500).json({ success: false, message: error.message || 'Failed to create redeem' })
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || 'Failed to create redeem' })
   }
 })
 
@@ -820,7 +823,9 @@ router.get('/redeems', authenticateAdmin, async (req, res) => {
     return res.json({ success: true, data: list })
   } catch (error) {
     logger.error('❌ Failed to list redeems:', error)
-    return res.status(500).json({ success: false, message: error.message || 'Failed to list redeems' })
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || 'Failed to list redeems' })
   }
 })
 
@@ -831,7 +836,9 @@ router.put('/redeems/:code', authenticateAdmin, async (req, res) => {
     const updated = await redeemService.updateRedeem(req.params.code, req.body || {})
     return res.json({ success: true, data: updated })
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message || 'Failed to update redeem' })
+    return res
+      .status(400)
+      .json({ success: false, message: error.message || 'Failed to update redeem' })
   }
 })
 
@@ -842,7 +849,9 @@ router.delete('/redeems/:code', authenticateAdmin, async (req, res) => {
     await redeemService.deleteRedeem(req.params.code)
     return res.json({ success: true })
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message || 'Failed to delete redeem' })
+    return res
+      .status(400)
+      .json({ success: false, message: error.message || 'Failed to delete redeem' })
   }
 })
 

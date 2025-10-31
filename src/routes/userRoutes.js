@@ -414,11 +414,20 @@ router.get('/usage-stats', authenticateUser, async (req, res) => {
   try {
     const { period = 'week', model } = req.query
 
+    logger.debug(
+      `📊 Fetching usage stats for user ${req.user.id} (${req.user.username}), period=${period}`
+    )
+
     // 获取用户的API Keys (including deleted ones for complete usage stats)
     const userApiKeys = await apiKeyService.getUserApiKeys(req.user.id, true)
     const apiKeyIds = userApiKeys.map((key) => key.id)
 
+    logger.debug(
+      `📊 User ${req.user.id} has ${userApiKeys.length} API keys: ${apiKeyIds.join(', ')}`
+    )
+
     if (apiKeyIds.length === 0) {
+      logger.debug(`📊 User ${req.user.id} has no API keys, returning empty stats`)
       return res.json({
         success: true,
         stats: {
@@ -435,12 +444,17 @@ router.get('/usage-stats', authenticateUser, async (req, res) => {
     // 获取使用统计
     const stats = await apiKeyService.getAggregatedUsageStats(apiKeyIds, { period, model })
 
+    logger.debug(
+      `📊 Returning stats for user ${req.user.id}: ${stats.totalRequests} requests, ${stats.totalInputTokens + stats.totalOutputTokens} tokens, $${stats.totalCost}`
+    )
+
     res.json({
       success: true,
       stats
     })
   } catch (error) {
     logger.error('❌ Get user usage stats error:', error)
+    logger.error('❌ Error stack:', error.stack)
     res.status(500).json({
       error: 'Usage stats error',
       message: 'Failed to retrieve usage statistics'
@@ -471,8 +485,8 @@ router.get('/', authenticateUserOrAdmin, requireAdmin, async (req, res) => {
       filteredUsers = result.users.filter(
         (user) =>
           user.username.toLowerCase().includes(searchLower) ||
-          user.displayName.toLowerCase().includes(searchLower) ||
-          user.email.toLowerCase().includes(searchLower)
+          user.displayName?.toLowerCase().includes(searchLower) ||
+          user.email?.toLowerCase().includes(searchLower)
       )
     }
 
@@ -488,10 +502,47 @@ router.get('/', authenticateUserOrAdmin, requireAdmin, async (req, res) => {
     })
   } catch (error) {
     logger.error('❌ Get users list error:', error)
+    logger.error('❌ Error stack:', error.stack)
     res.status(500).json({
       error: 'Users list error',
-      message: 'Failed to retrieve users list'
+      message: error.message || 'Failed to retrieve users list'
     })
+  }
+})
+
+// ✨ 创建用户（管理员）
+router.post('/', authenticateUserOrAdmin, requireAdmin, async (req, res) => {
+  try {
+    const userService = require('../services/userService')
+
+    const {
+      username,
+      email = '',
+      displayName = '',
+      firstName = '',
+      lastName = '',
+      role = 'user',
+      isActive = true
+    } = req.body || {}
+
+    if (!username || typeof username !== 'string' || username.trim() === '') {
+      return res.status(400).json({ success: false, message: 'username is required' })
+    }
+
+    const created = await userService.createOrUpdateUser({
+      username: username.trim(),
+      email,
+      displayName,
+      firstName,
+      lastName,
+      role,
+      isActive: Boolean(isActive)
+    })
+
+    return res.json({ success: true, user: created })
+  } catch (error) {
+    logger.error('❌ Create user error:', error)
+    return res.status(500).json({ success: false, message: error.message || 'Create user failed' })
   }
 })
 
@@ -554,6 +605,29 @@ router.get('/:userId', authenticateUserOrAdmin, requireAdmin, async (req, res) =
       error: 'User details error',
       message: 'Failed to retrieve user details'
     })
+  }
+})
+
+// 🎟️ 获取用户兑换码列表（管理员）
+router.get('/:userId/redeems', authenticateUserOrAdmin, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params
+    const userService = require('../services/userService')
+    const redeemService = require('../services/redeemService')
+
+    // 确认用户存在
+    const user = await userService.getUserById(userId, false)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    const redeems = await redeemService.getUserRedeems(userId)
+    return res.json({ success: true, redeems, total: redeems.length })
+  } catch (error) {
+    logger.error('❌ Get user redeems error:', error)
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || 'Get user redeems failed' })
   }
 })
 
@@ -735,9 +809,10 @@ router.get('/stats/overview', authenticateUserOrAdmin, requireAdmin, async (req,
     })
   } catch (error) {
     logger.error('❌ Get user stats overview error:', error)
+    logger.error('❌ Error stack:', error.stack)
     res.status(500).json({
       error: 'Stats error',
-      message: 'Failed to retrieve user statistics'
+      message: error.message || 'Failed to retrieve user statistics'
     })
   }
 })

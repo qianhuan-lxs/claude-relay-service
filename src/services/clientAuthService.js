@@ -9,7 +9,7 @@ class ClientAuthService {
     this.usernamePrefix = 'client_username:'
     this.emailPrefix = 'client_email:'
     this.sessionPrefix = 'client_session:'
-    
+
     // PBKDF2 configuration
     this.pbkdf2Iterations = 100000
     this.pbkdf2KeyLength = 64
@@ -40,14 +40,10 @@ class ClientAuthService {
    */
   hashPassword(password) {
     const salt = crypto.randomBytes(this.saltLength).toString('hex')
-    const hash = crypto.pbkdf2Sync(
-      password,
-      salt,
-      this.pbkdf2Iterations,
-      this.pbkdf2KeyLength,
-      this.pbkdf2Digest
-    ).toString('hex')
-    
+    const hash = crypto
+      .pbkdf2Sync(password, salt, this.pbkdf2Iterations, this.pbkdf2KeyLength, this.pbkdf2Digest)
+      .toString('hex')
+
     return { hash, salt }
   }
 
@@ -59,14 +55,10 @@ class ClientAuthService {
    * @returns {boolean} - True if password matches
    */
   verifyPassword(password, hash, salt) {
-    const hashToVerify = crypto.pbkdf2Sync(
-      password,
-      salt,
-      this.pbkdf2Iterations,
-      this.pbkdf2KeyLength,
-      this.pbkdf2Digest
-    ).toString('hex')
-    
+    const hashToVerify = crypto
+      .pbkdf2Sync(password, salt, this.pbkdf2Iterations, this.pbkdf2KeyLength, this.pbkdf2Digest)
+      .toString('hex')
+
     return hash === hashToVerify
   }
 
@@ -140,7 +132,7 @@ class ClientAuthService {
 
       // Store user data in Redis
       await redis.set(`${this.userPrefix}${userId}`, JSON.stringify(user))
-      
+
       // Create username and email mappings
       await redis.set(`${this.usernamePrefix}${username}`, userId)
       await redis.set(`${this.emailPrefix}${email}`, userId)
@@ -171,7 +163,7 @@ class ClientAuthService {
     try {
       // Try to find by username first
       let userId = await redis.get(`${this.usernamePrefix}${identifier}`)
-      
+
       // If not found by username, try by email
       if (!userId) {
         userId = await redis.get(`${this.emailPrefix}${identifier}`)
@@ -222,7 +214,7 @@ class ClientAuthService {
   async authenticateUser(identifier, password) {
     try {
       const user = await this.findUserByIdentifier(identifier)
-      
+
       if (!user) {
         return null
       }
@@ -233,7 +225,7 @@ class ClientAuthService {
       }
 
       const isValidPassword = this.verifyPassword(password, user.passwordHash, user.salt)
-      
+
       if (!isValidPassword) {
         logger.security(`🚫 Invalid password attempt for user: ${identifier}`)
         return null
@@ -269,8 +261,8 @@ class ClientAuthService {
   async createSession(userId, userData) {
     try {
       const sessionToken = this.generateSessionToken()
-      const sessionTimeout = config.clientAuth?.sessionTimeout || (7 * 24 * 60 * 60) // 7 days default
-      
+      const sessionTimeout = config.clientAuth?.sessionTimeout || 7 * 24 * 60 * 60 // 7 days default
+
       const session = {
         userId,
         username: userData.username,
@@ -280,7 +272,11 @@ class ClientAuthService {
       }
 
       // Store session with TTL
-      await redis.setex(`${this.sessionPrefix}${sessionToken}`, sessionTimeout, JSON.stringify(session))
+      await redis.setex(
+        `${this.sessionPrefix}${sessionToken}`,
+        sessionTimeout,
+        JSON.stringify(session)
+      )
 
       logger.info(`🎫 Client session created for user: ${userData.username}`)
 
@@ -299,7 +295,7 @@ class ClientAuthService {
   async validateSession(sessionToken) {
     try {
       const sessionData = await redis.get(`${this.sessionPrefix}${sessionToken}`)
-      
+
       if (!sessionData) {
         return null
       }
@@ -347,19 +343,23 @@ class ClientAuthService {
   async refreshSession(sessionToken) {
     try {
       const sessionData = await redis.get(`${this.sessionPrefix}${sessionToken}`)
-      
+
       if (!sessionData) {
         return false
       }
 
       const session = JSON.parse(sessionData)
-      const sessionTimeout = config.clientAuth?.sessionTimeout || (7 * 24 * 60 * 60)
+      const sessionTimeout = config.clientAuth?.sessionTimeout || 7 * 24 * 60 * 60
 
       // Update expiry time
       session.expiresAt = new Date(Date.now() + sessionTimeout * 1000).toISOString()
 
       // Store with new TTL
-      await redis.setex(`${this.sessionPrefix}${sessionToken}`, sessionTimeout, JSON.stringify(session))
+      await redis.setex(
+        `${this.sessionPrefix}${sessionToken}`,
+        sessionTimeout,
+        JSON.stringify(session)
+      )
 
       logger.debug(`🔄 Client session refreshed: ${sessionToken}`)
 
@@ -378,7 +378,7 @@ class ClientAuthService {
   async getUserProfile(userId) {
     try {
       const user = await this.getUserById(userId)
-      
+
       if (!user) {
         return null
       }

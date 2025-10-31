@@ -6,7 +6,7 @@
     <div class="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
       <div class="mt-3">
         <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-900">Change User Role</h3>
+          <h3 class="text-lg font-medium text-gray-900">修改用户角色</h3>
           <button class="text-gray-400 hover:text-gray-600" @click="$emit('close')">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -54,7 +54,7 @@
                         : 'bg-blue-100 text-blue-800'
                     ]"
                   >
-                    Current: {{ user.role }}
+                    当前：{{ user.role === 'admin' ? '管理员' : '普通用户' }}
                   </span>
                 </div>
               </div>
@@ -64,7 +64,7 @@
           <!-- Role Selection -->
           <form class="space-y-4" @submit.prevent="handleSubmit">
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-700"> New Role </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700">新角色</label>
               <div class="space-y-2">
                 <label class="flex items-center">
                   <input
@@ -75,8 +75,8 @@
                     value="user"
                   />
                   <div class="ml-3">
-                    <div class="text-sm font-medium text-gray-900">User</div>
-                    <div class="text-xs text-gray-500">Regular user with basic permissions</div>
+                    <div class="text-sm font-medium text-gray-900">普通用户</div>
+                    <div class="text-xs text-gray-500">具有基本权限的普通用户</div>
                   </div>
                 </label>
                 <label class="flex items-center">
@@ -88,8 +88,8 @@
                     value="admin"
                   />
                   <div class="ml-3">
-                    <div class="text-sm font-medium text-gray-900">Administrator</div>
-                    <div class="text-xs text-gray-500">Full access to manage users and system</div>
+                    <div class="text-sm font-medium text-gray-900">管理员</div>
+                    <div class="text-xs text-gray-500">拥有管理用户和系统的完整权限</div>
                   </div>
                 </label>
               </div>
@@ -111,15 +111,14 @@
                   </svg>
                 </div>
                 <div class="ml-3">
-                  <h3 class="text-sm font-medium text-yellow-800">Role Change Warning</h3>
+                  <h3 class="text-sm font-medium text-yellow-800">角色变更警告</h3>
                   <div class="mt-2 text-sm text-yellow-700">
                     <p v-if="selectedRole === 'admin'">
-                      Granting admin privileges will give this user full access to the system,
-                      including the ability to manage other users and their API keys.
+                      授予管理员权限将使该用户拥有系统的完全访问权限，包括管理其他用户及其 API Keys
+                      的能力。
                     </p>
                     <p v-else>
-                      Removing admin privileges will restrict this user to only managing their own
-                      API keys and viewing their own usage statistics.
+                      移除管理员权限将限制该用户只能管理自己的 API Keys 和查看自己的使用统计。
                     </p>
                   </div>
                 </div>
@@ -150,7 +149,7 @@
                 type="button"
                 @click="$emit('close')"
               >
-                Cancel
+                取消
               </button>
               <button
                 class="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -178,9 +177,9 @@
                       fill="currentColor"
                     ></path>
                   </svg>
-                  Updating...
+                  更新中...
                 </span>
-                <span v-else>Update Role</span>
+                <span v-else>更新角色</span>
               </button>
             </div>
           </form>
@@ -226,14 +225,17 @@ const handleSubmit = async () => {
     })
 
     if (response.success) {
-      showToast(`User role updated to ${selectedRole.value}`, 'success')
+      showToast(
+        `用户角色已更新为${selectedRole.value === 'admin' ? '管理员' : '普通用户'}`,
+        'success'
+      )
       emit('updated')
     } else {
-      error.value = response.message || 'Failed to update user role'
+      error.value = response.message || '更新用户角色失败'
     }
   } catch (err) {
     console.error('Update user role error:', err)
-    error.value = err.response?.data?.message || err.message || 'Failed to update user role'
+    error.value = err.response?.data?.message || err.message || '更新用户角色失败'
   } finally {
     loading.value = false
   }

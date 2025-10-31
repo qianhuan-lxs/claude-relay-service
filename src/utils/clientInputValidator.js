@@ -13,31 +13,31 @@ class ClientInputValidator {
     }
 
     const trimmedUsername = username.trim()
-    
+
     if (trimmedUsername.length < 3) {
       throw new Error('Username must be at least 3 characters long')
     }
-    
+
     if (trimmedUsername.length > 30) {
       throw new Error('Username must be no more than 30 characters long')
     }
-    
+
     // Allow alphanumeric characters and underscores only
     const usernameRegex = /^[a-zA-Z0-9_]+$/
     if (!usernameRegex.test(trimmedUsername)) {
       throw new Error('Username can only contain letters, numbers, and underscores')
     }
-    
+
     // Cannot start with underscore
     if (trimmedUsername.startsWith('_')) {
       throw new Error('Username cannot start with an underscore')
     }
-    
+
     // Cannot end with underscore
     if (trimmedUsername.endsWith('_')) {
       throw new Error('Username cannot end with an underscore')
     }
-    
+
     return trimmedUsername.toLowerCase()
   }
 
@@ -53,31 +53,32 @@ class ClientInputValidator {
     }
 
     const trimmedEmail = email.trim().toLowerCase()
-    
+
     if (trimmedEmail.length === 0) {
       throw new Error('Email cannot be empty')
     }
-    
+
     if (trimmedEmail.length > 254) {
       throw new Error('Email is too long')
     }
-    
+
     // RFC 5322 compliant email regex (simplified but robust)
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-    
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
     if (!emailRegex.test(trimmedEmail)) {
       throw new Error('Invalid email format')
     }
-    
+
     // Additional checks
     if (trimmedEmail.includes('..')) {
       throw new Error('Email cannot contain consecutive dots')
     }
-    
+
     if (trimmedEmail.startsWith('.') || trimmedEmail.endsWith('.')) {
       throw new Error('Email cannot start or end with a dot')
     }
-    
+
     return trimmedEmail
   }
 
@@ -91,38 +92,46 @@ class ClientInputValidator {
     if (!password || typeof password !== 'string') {
       throw new Error('Password is required')
     }
-    
+
     if (password.length < 8) {
       throw new Error('Password must be at least 8 characters long')
     }
-    
+
     if (password.length > 128) {
       throw new Error('Password is too long (maximum 128 characters)')
     }
-    
+
     // Check for common weak patterns
     if (password === password.toLowerCase()) {
       throw new Error('Password must contain at least one uppercase letter')
     }
-    
+
     if (password === password.toUpperCase()) {
       throw new Error('Password must contain at least one lowercase letter')
     }
-    
+
     if (!/\d/.test(password)) {
       throw new Error('Password must contain at least one number')
     }
-    
+
     // Check for common weak passwords
     const commonPasswords = [
-      'password', '123456', '123456789', 'qwerty', 'abc123',
-      'password123', 'admin', 'letmein', 'welcome', 'monkey'
+      'password',
+      '123456',
+      '123456789',
+      'qwerty',
+      'abc123',
+      'password123',
+      'admin',
+      'letmein',
+      'welcome',
+      'monkey'
     ]
-    
+
     if (commonPasswords.includes(password.toLowerCase())) {
       throw new Error('Password is too common, please choose a stronger password')
     }
-    
+
     return password
   }
 
@@ -183,7 +192,7 @@ class ClientInputValidator {
 
     return {
       username: username.trim().toLowerCase(),
-      password: password
+      password
     }
   }
 }

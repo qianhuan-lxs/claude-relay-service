@@ -27,7 +27,9 @@ class RedeemService {
   }
 
   _encryptPlaintext(plaintext) {
-    if (!plaintext) return ''
+    if (!plaintext) {
+      return ''
+    }
     const key = this._getEncryptionKey()
     const iv = crypto.randomBytes(12)
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
@@ -37,7 +39,9 @@ class RedeemService {
   }
 
   _decryptPlaintext(blob) {
-    if (!blob) return ''
+    if (!blob) {
+      return ''
+    }
     const buf = Buffer.from(blob, 'base64')
     const iv = buf.subarray(0, 12)
     const tag = buf.subarray(12, 28)
@@ -132,15 +136,53 @@ class RedeemService {
     return list
   }
 
+  async getUserRedeems(userId) {
+    const client = redis.getClientSafe()
+    const setKey = `${this.userRedeemsPrefix}${userId}`
+    // 获取该用户关联的兑换码集合
+    const codes = (await client.smembers(setKey)) || []
+    const results = []
+    for (const code of codes) {
+      try {
+        const data = await this.getRedeem(code)
+        if (data) {
+          // 附带关联 API Key 的简要信息（若可用）
+          try {
+            const apiKey = await apiKeyService.getApiKeyById(data.apiKeyId)
+            if (apiKey) {
+              data.apiKeyName = apiKey.name
+              data.apiKeyDescription = apiKey.description
+            }
+          } catch (e) {
+            logger.debug('Failed to get API key for user redeem:', e)
+          }
+          results.push(data)
+        }
+      } catch (e) {
+        logger.debug('Failed to load redeem for code:', code, e)
+      }
+    }
+    // 按创建时间/激活时间倒序
+    results.sort(
+      (a, b) =>
+        new Date(b.activatedAt || b.createdAt || 0) - new Date(a.activatedAt || a.createdAt || 0)
+    )
+    return results
+  }
+
   async updateRedeem(code, updates) {
     const client = redis.getClientSafe()
     const key = `${this.redeemPrefix}${code}`
     const current = await client.hgetall(key)
-    if (!current || Object.keys(current).length === 0) throw new Error('Redeem not found')
+    if (!current || Object.keys(current).length === 0) {
+      throw new Error('Redeem not found')
+    }
 
     const allowed = ['status', 'expiresAt', 'notes']
     for (const [k, v] of Object.entries(updates || {})) {
-      if (allowed.includes(k)) current[k] = v == null ? '' : String(v)
+      if (allowed.includes(k)) {
+        current[k] = v == null ? '' : String(v)
+      }
     }
     await client.hset(key, current)
     return current
@@ -150,15 +192,23 @@ class RedeemService {
     const client = redis.getClientSafe()
     const key = `${this.redeemPrefix}${code}`
     const cur = await client.hgetall(key)
-    if (!cur || Object.keys(cur).length === 0) return 0
-    if (cur.status === 'used') throw new Error('Cannot delete a used redeem')
+    if (!cur || Object.keys(cur).length === 0) {
+      return 0
+    }
+    if (cur.status === 'used') {
+      throw new Error('Cannot delete a used redeem')
+    }
     return client.del(key)
   }
 
   async activateRedeem(code, user) {
     const redeem = await this.getRedeem(code)
-    if (!redeem) throw new Error('兑换码不存在')
-    if (redeem.status !== 'unused') throw new Error('兑换码不可用')
+    if (!redeem) {
+      throw new Error('兑换码不存在')
+    }
+    if (redeem.status !== 'unused') {
+      throw new Error('兑换码不可用')
+    }
     if (redeem.expiresAt && new Date() > new Date(redeem.expiresAt)) {
       await this.updateRedeem(code, { status: 'expired' })
       throw new Error('兑换码已过期')
@@ -186,5 +236,3 @@ class RedeemService {
 }
 
 module.exports = new RedeemService()
-
-

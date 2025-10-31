@@ -102,7 +102,7 @@ class ApiKeyService {
 
     // 检查名称是否已存在
     const existingKeys = await redis.getAllApiKeys()
-    const nameExists = existingKeys.some(key => key.name === name)
+    const nameExists = existingKeys.some((key) => key.name === name)
     if (nameExists) {
       throw new Error(`API Key名称 "${name}" 已存在，请使用不同的名称`)
     }
@@ -585,10 +585,10 @@ class ApiKeyService {
         } catch (e) {
           key.tags = []
         }
-        
+
         // 添加绑定的兑换码字段
         key.boundRedeemCode = key.boundRedeemCode || null
-        
+
         // 不暴露已弃用字段
         if (Object.prototype.hasOwnProperty.call(key, 'ccrAccountId')) {
           delete key.ccrAccountId
@@ -1645,17 +1645,49 @@ class ApiKeyService {
         modelStats: []
       }
 
+      if (keyIds.length === 0) {
+        logger.debug(`📊 No API keys provided for usage stats aggregation`)
+        return stats
+      }
+
+      logger.debug(`📊 Aggregating usage stats for ${keyIds.length} API keys: ${keyIds.join(', ')}`)
+
       // 汇总所有API Key的统计数据
       for (const keyId of keyIds) {
-        const keyStats = await redis.getUsageStats(keyId)
-        const costStats = await redis.getCostStats(keyId)
-        if (keyStats && keyStats.total) {
-          stats.totalRequests += keyStats.total.requests || 0
-          stats.totalInputTokens += keyStats.total.inputTokens || 0
-          stats.totalOutputTokens += keyStats.total.outputTokens || 0
-          stats.totalCost += costStats?.total || 0
+        try {
+          const keyStats = await redis.getUsageStats(keyId)
+          const costStats = await redis.getCostStats(keyId)
+
+          logger.debug(
+            `📊 Key ${keyId}: stats=${JSON.stringify(keyStats?.total)}, cost=${costStats?.total}`
+          )
+
+          if (keyStats && keyStats.total) {
+            const requests = keyStats.total.requests || 0
+            const inputTokens = keyStats.total.inputTokens || 0
+            const outputTokens = keyStats.total.outputTokens || 0
+            const cost = costStats?.total || 0
+
+            stats.totalRequests += requests
+            stats.totalInputTokens += inputTokens
+            stats.totalOutputTokens += outputTokens
+            stats.totalCost += cost
+
+            logger.debug(
+              `📊 Key ${keyId} contributed: ${requests} requests, ${inputTokens + outputTokens} tokens, $${cost}`
+            )
+          } else {
+            logger.debug(`📊 Key ${keyId} has no usage stats yet`)
+          }
+        } catch (keyError) {
+          logger.error(`❌ Error getting stats for key ${keyId}:`, keyError)
+          // Continue with other keys even if one fails
         }
       }
+
+      logger.debug(
+        `📊 Aggregated stats: ${stats.totalRequests} requests, ${stats.totalInputTokens + stats.totalOutputTokens} tokens, $${stats.totalCost}`
+      )
 
       // TODO: 实现日期范围和模型统计
       // 这里可以根据需要添加更详细的统计逻辑
