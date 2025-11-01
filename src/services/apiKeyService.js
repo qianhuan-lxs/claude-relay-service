@@ -1635,7 +1635,7 @@ class ApiKeyService {
         keyIds = [keyIds]
       }
 
-      const { period: _period = 'week', model: _model } = options
+      const { period = 'week', model: filterModel } = options
       const stats = {
         totalRequests: 0,
         totalInputTokens: 0,
@@ -1650,34 +1650,228 @@ class ApiKeyService {
         return stats
       }
 
-      logger.debug(`📊 Aggregating usage stats for ${keyIds.length} API keys: ${keyIds.join(', ')}`)
+      logger.debug(
+        `📊 Aggregating usage stats for ${keyIds.length} API keys (period: ${period}): ${keyIds.join(', ')}`
+      )
+
+      const client = redis.getClientSafe()
+
+      // 计算日期范围
+      const today = new Date()
+      let startDate = new Date(today)
+      let dateRange = []
+
+      if (period === 'week') {
+        startDate.setDate(today.getDate() - 6) // 最近7天（包括今天）
+      } else if (period === 'month') {
+        startDate.setDate(today.getDate() - 29) // 最近30天（包括今天）
+      }
+      // period === 'all' 时，不设置startDate，获取所有数据
+
+      // 生成日期范围列表
+      if (period === 'all') {
+        // 对于'all'，我们需要获取所有可能的日期，但这可能很慢，所以我们使用keys模式
+        // 实际使用时，我们可以限制一个合理的范围，比如最近365天
+        const maxDate = new Date(today)
+        maxDate.setDate(today.getDate() - 365) // 最多获取最近365天
+        startDate = maxDate
+      }
+
+      const currentDate = new Date(startDate)
+      while (currentDate <= today) {
+        const dateStr = redis.getDateStringInTimezone(currentDate)
+        dateRange.push(dateStr)
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+
+      logger.debug(
+        `📊 Date range: ${dateRange[0]} to ${dateRange[dateRange.length - 1]} (${dateRange.length} days)`
+      )
 
       // 汇总所有API Key的统计数据
+      const dailyStatsMap = new Map() // date -> { requests, inputTokens, outputTokens, cost }
+      const modelStatsMap = new Map() // model -> { requests, inputTokens, outputTokens, cost }
+
       for (const keyId of keyIds) {
         try {
-          const keyStats = await redis.getUsageStats(keyId)
-          const costStats = await redis.getCostStats(keyId)
+          // 获取指定日期范围的daily统计
+          for (const dateStr of dateRange) {
+            const dailyKey = `usage:daily:${keyId}:${dateStr}`
+            const dailyData = await client.hgetall(dailyKey)
 
-          logger.debug(
-            `📊 Key ${keyId}: stats=${JSON.stringify(keyStats?.total)}, cost=${costStats?.total}`
-          )
+            if (dailyData && Object.keys(dailyData).length > 0) {
+              const existing = dailyStatsMap.get(dateStr) || {
+                date: dateStr,
+                requests: 0,
+                inputTokens: 0,
+                outputTokens: 0,
+                cost: 0
+              }
 
-          if (keyStats && keyStats.total) {
-            const requests = keyStats.total.requests || 0
-            const inputTokens = keyStats.total.inputTokens || 0
-            const outputTokens = keyStats.total.outputTokens || 0
-            const cost = costStats?.total || 0
+              existing.requests += parseInt(dailyData.requests || dailyData.totalRequests || 0)
+              existing.inputTokens += parseInt(
+                dailyData.inputTokens || dailyData.totalInputTokens || 0
+              )
+              existing.outputTokens += parseInt(
+                dailyData.outputTokens || dailyData.totalOutputTokens || 0
+              )
 
-            stats.totalRequests += requests
-            stats.totalInputTokens += inputTokens
-            stats.totalOutputTokens += outputTokens
-            stats.totalCost += cost
+              // 获取当日费用
+              const dailyCostKey = `usage:cost:daily:${keyId}:${dateStr}`
+              const dailyCost = await client.get(dailyCostKey)
+              existing.cost += parseFloat(dailyCost || 0)
 
-            logger.debug(
-              `📊 Key ${keyId} contributed: ${requests} requests, ${inputTokens + outputTokens} tokens, $${cost}`
-            )
+              dailyStatsMap.set(dateStr, existing)
+            }
+          }
+
+          // 获取模型统计（如果指定了日期范围）
+          if (period !== 'all') {
+            // 对于week/month，获取指定日期范围的模型统计
+            for (const dateStr of dateRange) {
+              const modelPattern = `usage:${keyId}:model:daily:*:${dateStr}`
+              const modelKeys = await client.keys(modelPattern)
+
+              for (const modelKey of modelKeys) {
+                // 解析模型名称：usage:{keyId}:model:daily:{model}:{date}
+                const match = modelKey.match(/usage:[^:]+:model:daily:(.+):(\d{4}-\d{2}-\d{2})/)
+                if (!match) continue
+
+                const [, modelName, keyDate] = match
+                // 如果指定了filterModel，只统计该模型
+                if (filterModel && modelName !== filterModel) continue
+
+                const modelData = await client.hgetall(modelKey)
+                if (modelData && Object.keys(modelData).length > 0) {
+                  const existing = modelStatsMap.get(modelName) || {
+                    model: modelName,
+                    requests: 0,
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    cost: 0
+                  }
+
+                  existing.requests += parseInt(
+                    modelData.requests || modelData.totalRequests || 0
+                  )
+                  existing.inputTokens += parseInt(
+                    modelData.inputTokens || modelData.totalInputTokens || 0
+                  )
+                  existing.outputTokens += parseInt(
+                    modelData.outputTokens || modelData.totalOutputTokens || 0
+                  )
+
+                  // 计算模型当日费用（需要根据tokens计算）
+                  const inputTokens = parseInt(modelData.inputTokens || modelData.totalInputTokens || 0)
+                  const outputTokens = parseInt(
+                    modelData.outputTokens || modelData.totalOutputTokens || 0
+                  )
+                  if (inputTokens > 0 || outputTokens > 0) {
+                    try {
+                      const CostCalculator = require('../utils/costCalculator')
+                      const usage = {
+                        input_tokens: inputTokens,
+                        output_tokens: outputTokens,
+                        cache_creation_input_tokens:
+                          parseInt(modelData.cacheCreateTokens || modelData.totalCacheCreateTokens || 0),
+                        cache_read_input_tokens:
+                          parseInt(modelData.cacheReadTokens || modelData.totalCacheReadTokens || 0)
+                      }
+                      const costResult = CostCalculator.calculateCost(usage, modelName)
+                      existing.cost += costResult.costs.total
+                    } catch (costError) {
+                      logger.debug(`Failed to calculate cost for model ${modelName}:`, costError)
+                    }
+                  }
+
+                  modelStatsMap.set(modelName, existing)
+                }
+              }
+            }
           } else {
-            logger.debug(`📊 Key ${keyId} has no usage stats yet`)
+            // 对于'all'，获取所有模型统计（限制最近365天）
+            const modelPattern = `usage:${keyId}:model:daily:*:*`
+            const allModelKeys = await client.keys(modelPattern)
+
+            for (const modelKey of allModelKeys) {
+              const match = modelKey.match(/usage:[^:]+:model:daily:(.+):(\d{4}-\d{2}-\d{2})/)
+              if (!match) continue
+
+              const [, modelName, keyDate] = match
+              // 检查日期是否在范围内
+              const keyDateObj = new Date(keyDate + 'T00:00:00')
+              if (keyDateObj < startDate) continue
+
+              if (filterModel && modelName !== filterModel) continue
+
+              const modelData = await client.hgetall(modelKey)
+              if (modelData && Object.keys(modelData).length > 0) {
+                const existing = modelStatsMap.get(modelName) || {
+                  model: modelName,
+                  requests: 0,
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  cost: 0
+                }
+
+                existing.requests += parseInt(
+                  modelData.requests || modelData.totalRequests || 0
+                )
+                existing.inputTokens += parseInt(
+                  modelData.inputTokens || modelData.totalInputTokens || 0
+                )
+                existing.outputTokens += parseInt(
+                  modelData.outputTokens || modelData.totalOutputTokens || 0
+                )
+
+                // 计算模型费用
+                const inputTokens = parseInt(modelData.inputTokens || modelData.totalInputTokens || 0)
+                const outputTokens = parseInt(
+                  modelData.outputTokens || modelData.totalOutputTokens || 0
+                )
+                if (inputTokens > 0 || outputTokens > 0) {
+                  try {
+                    const CostCalculator = require('../utils/costCalculator')
+                    const usage = {
+                      input_tokens: inputTokens,
+                      output_tokens: outputTokens,
+                      cache_creation_input_tokens:
+                        parseInt(modelData.cacheCreateTokens || modelData.totalCacheCreateTokens || 0),
+                      cache_read_input_tokens:
+                        parseInt(modelData.cacheReadTokens || modelData.totalCacheReadTokens || 0)
+                    }
+                    const costResult = CostCalculator.calculateCost(usage, modelName)
+                    existing.cost += costResult.costs.total
+                  } catch (costError) {
+                    logger.debug(`Failed to calculate cost for model ${modelName}:`, costError)
+                  }
+                }
+
+                modelStatsMap.set(modelName, existing)
+              }
+            }
+          }
+
+          // 汇总总体数据（根据period筛选）
+          if (period === 'all') {
+            // 对于'all'，使用总统计数据
+            const keyStats = await redis.getUsageStats(keyId)
+            const costStats = await redis.getCostStats(keyId)
+
+            if (keyStats && keyStats.total) {
+              stats.totalRequests += keyStats.total.requests || 0
+              stats.totalInputTokens += keyStats.total.inputTokens || 0
+              stats.totalOutputTokens += keyStats.total.outputTokens || 0
+            }
+            stats.totalCost += costStats?.total || 0
+          } else {
+            // 对于week/month，从dailyStats汇总
+            for (const dailyStat of dailyStatsMap.values()) {
+              stats.totalRequests += dailyStat.requests
+              stats.totalInputTokens += dailyStat.inputTokens
+              stats.totalOutputTokens += dailyStat.outputTokens
+              stats.totalCost += dailyStat.cost
+            }
           }
         } catch (keyError) {
           logger.error(`❌ Error getting stats for key ${keyId}:`, keyError)
@@ -1685,12 +1879,19 @@ class ApiKeyService {
         }
       }
 
-      logger.debug(
-        `📊 Aggregated stats: ${stats.totalRequests} requests, ${stats.totalInputTokens + stats.totalOutputTokens} tokens, $${stats.totalCost}`
+      // 转换dailyStatsMap为数组并按日期排序
+      stats.dailyStats = Array.from(dailyStatsMap.values()).sort((a, b) =>
+        a.date.localeCompare(b.date)
       )
 
-      // TODO: 实现日期范围和模型统计
-      // 这里可以根据需要添加更详细的统计逻辑
+      // 转换modelStatsMap为数组并按请求数排序
+      stats.modelStats = Array.from(modelStatsMap.values()).sort(
+        (a, b) => (b.requests || 0) - (a.requests || 0)
+      )
+
+      logger.debug(
+        `📊 Aggregated stats: ${stats.totalRequests} requests, ${stats.totalInputTokens + stats.totalOutputTokens} tokens, $${stats.totalCost.toFixed(2)}, ${stats.dailyStats.length} daily entries, ${stats.modelStats.length} models`
+      )
 
       return stats
     } catch (error) {

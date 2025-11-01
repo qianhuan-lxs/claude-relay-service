@@ -35,8 +35,8 @@ router.beforeEach((to) => {
   if (!authed && (to.name === 'dashboard' || to.name === 'statistics' || to.name === 'redeem')) {
     return { name: 'login' }
   }
-  // 已登录：访问首页/登录/注册时跳转到仪表盘
-  if (authed && (to.name === 'home' || to.name === 'login' || to.name === 'register')) {
+  // 已登录：访问登录/注册页时跳转到仪表盘（首页允许访问）
+  if (authed && (to.name === 'login' || to.name === 'register')) {
     return { name: 'dashboard' }
   }
 })

@@ -7,18 +7,72 @@
           <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
             <span class="text-white font-bold text-sm">C</span>
           </div>
-          <span class="text-white text-xl font-bold">Code</span>
+          <span class="text-white text-xl font-bold">Claude Code Easy</span>
         </div>
         <div class="hidden md:flex items-center space-x-8">
           <a href="#features" class="text-gray-300 hover:text-white transition-colors">功能</a>
-          <a href="#pricing" class="text-gray-300 hover:text-white transition-colors">定价</a>
           <router-link to="/docs" class="text-gray-300 hover:text-white transition-colors">教程</router-link>
         </div>
-        <div class="flex items-center space-x-4">
+        <!-- 未登录状态：显示登录和注册按钮 -->
+        <div v-if="!authStore.isAuthenticated" class="flex items-center space-x-4">
           <router-link to="/auth/login" class="text-gray-300 hover:text-white transition-colors">登录</router-link>
           <router-link to="/auth/register" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
             开始使用
           </router-link>
+        </div>
+        
+        <!-- 已登录状态：显示用户信息和进入仪表盘按钮 -->
+        <div v-else class="relative flex items-center space-x-4" ref="userMenuRef">
+          <router-link
+            to="/dashboard"
+            class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+          >
+            开始使用
+          </router-link>
+          
+          <!-- 用户菜单按钮 -->
+          <button
+            @click="toggleUserMenu"
+            class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
+          >
+            <!-- 头像 -->
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+              {{ userInitial }}
+            </div>
+            <!-- 用户名 -->
+            <span class="text-white font-medium text-sm hidden sm:block">{{ displayName }}</span>
+            <!-- 下拉图标 -->
+            <svg
+              class="w-4 h-4 text-gray-400 transition-transform duration-200"
+              :class="{ 'rotate-180': showUserMenu }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- 用户下拉菜单 -->
+          <div
+            v-if="showUserMenu"
+            ref="dropdownRef"
+            class="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50"
+          >
+            <div class="px-4 py-3 border-b border-slate-700">
+              <p class="text-sm font-medium text-white">{{ displayName }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ userEmail }}</p>
+            </div>
+            <button
+              @click="handleLogout"
+              class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>登出</span>
+            </button>
+          </div>
         </div>
       </div>
     </nav>
@@ -37,19 +91,19 @@
           <!-- Main Heading -->
           <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
             <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              AI编程
+              Claude Code Easy
             </span>
             <br>
-            <span class="text-white">新时代</span>
+            <span class="text-white text-3xl md:text-5xl">自建Claude API中转服务</span>
           </h1>
           
           <!-- Subtitle -->
           <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            为开发者提供强大的AI编程助手，提升开发效率，释放创意潜能
+            一站式开源中转服务，让 Claude、OpenAI、Gemini 订阅统一接入，支持"拼车"式团队共享，更高效分摊成本，原生工具无缝使用
           </p>
 
           <!-- CTA Buttons -->
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <router-link to="/auth/register" class="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
               <span class="relative z-10">开始使用</span>
               <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -57,22 +111,6 @@
             <a href="#features" class="px-8 py-4 border-2 border-gray-400 text-gray-300 rounded-xl font-semibold text-lg hover:border-white hover:text-white transition-all duration-300">
               了解更多
             </a>
-          </div>
-
-          <!-- Stats -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl font-bold text-white mb-2">10K+</div>
-              <div class="text-gray-400">活跃开发者</div>
-            </div>
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl font-bold text-white mb-2">99.9%</div>
-              <div class="text-gray-400">服务可用性</div>
-            </div>
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl font-bold text-white mb-2">24/7</div>
-              <div class="text-gray-400">技术支持</div>
-            </div>
           </div>
         </div>
       </div>
@@ -82,43 +120,129 @@
     <section id="features" class="relative z-10 py-20 bg-black/20 backdrop-blur-sm">
       <div class="max-w-7xl mx-auto px-6">
         <div class="text-center mb-16">
-          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">为什么选择我们</h2>
-          <p class="text-xl text-gray-300 max-w-2xl mx-auto">三大核心优势，助力您的AI开发之旅</p>
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">产品特点</h2>
+          <p class="text-xl text-gray-300 max-w-2xl mx-auto">三大核心优势，让您轻松搭建专属AI中转服务</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Feature 1 -->
-          <div class="group relative p-8 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
-            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-4">智能高效</h3>
-            <p class="text-gray-300 leading-relaxed">AI驱动的代码生成和优化，大幅提升开发效率，让复杂的编程任务变得简单直观</p>
-          </div>
-
-          <!-- Feature 2 -->
+          <!-- Feature 1: 数据安全可控 -->
           <div class="group relative p-8 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
             <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4">安全可靠</h3>
-            <p class="text-gray-300 leading-relaxed">企业级安全标准，端到端加密保护，确保您的代码和数据安全，让开发无后顾之忧</p>
+            <h3 class="text-2xl font-bold text-white mb-4">数据安全可控</h3>
+            <p class="text-gray-300 leading-relaxed">所有API请求只经过你自己的服务器，直连Anthropic API，保护隐私</p>
           </div>
 
-          <!-- Feature 3 -->
+          <!-- Feature 2: 多账户管理 -->
+          <div class="group relative p-8 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
+            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-4">多账户管理</h3>
+            <p class="text-gray-300 leading-relaxed">支持多个Claude账户自动轮换，智能切换，提高稳定性</p>
+          </div>
+
+          <!-- Feature 3: 使用统计监控 -->
           <div class="group relative p-8 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
             <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
               </svg>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4">灵活易用</h3>
-            <p class="text-gray-300 leading-relaxed">支持多种编程语言和框架，提供丰富的API接口，轻松集成到现有开发流程中</p>
+            <h3 class="text-2xl font-bold text-white mb-4">使用统计监控</h3>
+            <p class="text-gray-300 leading-relaxed">详细的Token使用统计，成本分析，Web管理界面一目了然</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Supported Clients Section -->
+    <section id="clients" class="relative z-10 py-20 bg-black/10 backdrop-blur-sm">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">支持的客户端</h2>
+          <p class="text-xl text-gray-300 max-w-2xl mx-auto">原生工具无缝使用，兼容多种主流AI客户端</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Client 1: Claude Code -->
+          <div class="group relative p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">Claude Code</h3>
+                <p class="text-sm text-gray-400">官方命令行工具</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client 2: Codex CLI -->
+          <div class="group relative p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">Codex CLI</h3>
+                <p class="text-sm text-gray-400">OpenAI官方命令行工具</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client 3: Gemini CLI -->
+          <div class="group relative p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">Gemini CLI</h3>
+                <p class="text-sm text-gray-400">Gemini命令行工具</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client 4: Cherry Studio -->
+          <div class="group relative p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">Cherry Studio</h3>
+                <p class="text-sm text-gray-400">第三方AI客户端</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client 5: 第三方工具 -->
+          <div class="group relative p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105 md:col-span-2 lg:col-span-1">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">第三方工具</h3>
+                <p class="text-sm text-gray-400">支持接入符合各服务商标准 API 的客户端</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -132,18 +256,70 @@
             <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <span class="text-white font-bold text-sm">C</span>
             </div>
-            <span class="text-white text-xl font-bold">Code</span>
+            <span class="text-white text-xl font-bold">Claude Code Easy</span>
           </div>
           <div class="text-gray-400 text-sm">
-            © 2025 Code. All rights reserved.
+            © 2025 Claude Code Easy. All rights reserved.
           </div>
         </div>
       </div>
     </footer>
+
+    <!-- 联系客服按钮 -->
+    <ContactButton />
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import ContactButton from '@/components/ContactButton.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const showUserMenu = ref(false)
+const dropdownRef = ref(null)
+const userMenuRef = ref(null)
+
+const displayName = computed(() => {
+  return authStore.user?.username || '用户'
+})
+
+const userEmail = computed(() => {
+  return authStore.user?.email || ''
+})
+
+const userInitial = computed(() => {
+  const name = displayName.value
+  return name.charAt(0).toUpperCase()
+})
+
+function toggleUserMenu() {
+  showUserMenu.value = !showUserMenu.value
+}
+
+async function handleLogout() {
+  await authStore.logout()
+  showUserMenu.value = false
+  router.push('/')
+}
+
+// 点击外部关闭菜单
+function handleClickOutside(event) {
+  if (userMenuRef.value && !userMenuRef.value.contains(event.target)) {
+    showUserMenu.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
