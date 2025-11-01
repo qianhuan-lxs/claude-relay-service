@@ -263,6 +263,8 @@ class Application {
       this.app.use('/users', userRoutes)
       // 客户端认证路由（登录/注册等）
       this.app.use('/api/client/auth', require('./routes/clientAuthRoutes'))
+      // 客户端内容路由（公告、教程等）
+      this.app.use('/api/client', require('./routes/contentRoutes'))
       // 使用 web 路由（包含 auth 和页面重定向）
       this.app.use('/web', webRoutes)
       this.app.use('/apiStats', apiStatsRoutes)

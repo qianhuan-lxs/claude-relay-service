@@ -1995,4 +1995,318 @@ redisClient.getDateStringInTimezone = getDateStringInTimezone
 redisClient.getHourInTimezone = getHourInTimezone
 redisClient.getWeekStringInTimezone = getWeekStringInTimezone
 
+// 📢 公告管理方法
+redisClient.createAnnouncement = async function (announcementData) {
+  try {
+    const client = this.getClientSafe()
+    const { id, title, content, type = 'normal', isPinned = false, isActive = true, createdBy } = announcementData
+    const now = new Date().toISOString()
+    
+    const key = `announcement:${id}`
+    const listKey = 'announcements:list'
+    
+    const announcement = {
+      id,
+      title,
+      content,
+      type,
+      isPinned: isPinned.toString(),
+      isActive: isActive.toString(),
+      createdAt: now,
+      updatedAt: now,
+      ...(createdBy && { createdBy })
+    }
+    
+    // 存储公告hash
+    await client.hset(key, announcement)
+    
+    // 添加到sorted set，使用更新时间戳作为score（倒序，新的在前）
+    const score = new Date(now).getTime()
+    await client.zadd(listKey, score, id)
+    
+    logger.debug(`✅ Created announcement: ${id}`)
+    return announcement
+  } catch (error) {
+    logger.error(`❌ Failed to create announcement:`, error)
+    throw error
+  }
+}
+
+redisClient.getAnnouncement = async function (id) {
+  try {
+    const client = this.getClientSafe()
+    const key = `announcement:${id}`
+    const data = await client.hgetall(key)
+    
+    if (!data || Object.keys(data).length === 0) {
+      return null
+    }
+    
+    // 转换布尔值字符串，并确保 type 有有效值
+    return {
+      ...data,
+      type: data.type && (data.type === 'important' || data.type === 'normal') ? data.type : 'normal',
+      isPinned: data.isPinned === 'true',
+      isActive: data.isActive === 'true'
+    }
+  } catch (error) {
+    logger.error(`❌ Failed to get announcement ${id}:`, error)
+    throw error
+  }
+}
+
+redisClient.getAllAnnouncements = async function (activeOnly = false) {
+  try {
+    const client = this.getClientSafe()
+    const listKey = 'announcements:list'
+    
+    // 获取所有公告ID（按更新时间倒序，新的在前）
+    const ids = await client.zrevrange(listKey, 0, -1)
+    
+    const announcements = []
+    for (const id of ids) {
+      const announcement = await this.getAnnouncement(id)
+      if (announcement) {
+        // 如果只获取启用的，跳过未启用的
+        if (activeOnly && !announcement.isActive) {
+          continue
+        }
+        announcements.push(announcement)
+      }
+    }
+    
+    // 置顶的排在前面
+    announcements.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      return new Date(b.updatedAt) - new Date(a.updatedAt)
+    })
+    
+    return announcements
+  } catch (error) {
+    logger.error(`❌ Failed to get all announcements:`, error)
+    throw error
+  }
+}
+
+redisClient.updateAnnouncement = async function (id, updates) {
+  try {
+    const client = this.getClientSafe()
+    const key = `announcement:${id}`
+    const listKey = 'announcements:list'
+    
+    // 检查公告是否存在
+    const existing = await this.getAnnouncement(id)
+    if (!existing) {
+      throw new Error(`Announcement ${id} not found`)
+    }
+    
+    // 更新数据
+    const updatedData = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+    
+    // 转换布尔值为字符串
+    if (typeof updatedData.isPinned === 'boolean') {
+      updatedData.isPinned = updatedData.isPinned.toString()
+    }
+    if (typeof updatedData.isActive === 'boolean') {
+      updatedData.isActive = updatedData.isActive.toString()
+    }
+    
+    // 更新hash
+    await client.hset(key, updatedData)
+    
+    // 更新sorted set的score
+    const score = new Date(updatedData.updatedAt).getTime()
+    await client.zadd(listKey, score, id)
+    
+    logger.debug(`✅ Updated announcement: ${id}`)
+    return {
+      ...updatedData,
+      isPinned: updatedData.isPinned === 'true',
+      isActive: updatedData.isActive === 'true'
+    }
+  } catch (error) {
+    logger.error(`❌ Failed to update announcement ${id}:`, error)
+    throw error
+  }
+}
+
+redisClient.deleteAnnouncement = async function (id) {
+  try {
+    const client = this.getClientSafe()
+    const key = `announcement:${id}`
+    const listKey = 'announcements:list'
+    
+    // 删除hash
+    await client.del(key)
+    
+    // 从sorted set中移除
+    await client.zrem(listKey, id)
+    
+    logger.debug(`✅ Deleted announcement: ${id}`)
+    return true
+  } catch (error) {
+    logger.error(`❌ Failed to delete announcement ${id}:`, error)
+    throw error
+  }
+}
+
+// 📚 教程管理方法
+redisClient.createTutorial = async function (tutorialData) {
+  try {
+    const client = this.getClientSafe()
+    const { id, title, content, category = '快速开始', sortOrder = 0, isActive = true, createdBy } = tutorialData
+    const now = new Date().toISOString()
+    
+    const key = `tutorial:${id}`
+    const listKey = 'tutorials:list'
+    
+    const tutorial = {
+      id,
+      title,
+      content,
+      category,
+      sortOrder: sortOrder.toString(),
+      isActive: isActive.toString(),
+      createdAt: now,
+      updatedAt: now,
+      ...(createdBy && { createdBy })
+    }
+    
+    // 存储教程hash
+    await client.hset(key, tutorial)
+    
+    // 添加到sorted set，使用sortOrder作为score
+    await client.zadd(listKey, sortOrder, id)
+    
+    logger.debug(`✅ Created tutorial: ${id}`)
+    return tutorial
+  } catch (error) {
+    logger.error(`❌ Failed to create tutorial:`, error)
+    throw error
+  }
+}
+
+redisClient.getTutorial = async function (id) {
+  try {
+    const client = this.getClientSafe()
+    const key = `tutorial:${id}`
+    const data = await client.hgetall(key)
+    
+    if (!data || Object.keys(data).length === 0) {
+      return null
+    }
+    
+    // 转换类型
+    return {
+      ...data,
+      sortOrder: parseInt(data.sortOrder) || 0,
+      isActive: data.isActive === 'true'
+    }
+  } catch (error) {
+    logger.error(`❌ Failed to get tutorial ${id}:`, error)
+    throw error
+  }
+}
+
+redisClient.getAllTutorials = async function (activeOnly = false) {
+  try {
+    const client = this.getClientSafe()
+    const listKey = 'tutorials:list'
+    
+    // 获取所有教程ID（按sortOrder升序）
+    const ids = await client.zrange(listKey, 0, -1)
+    
+    const tutorials = []
+    for (const id of ids) {
+      const tutorial = await this.getTutorial(id)
+      if (tutorial) {
+        // 如果只获取启用的，跳过未启用的
+        if (activeOnly && !tutorial.isActive) {
+          continue
+        }
+        tutorials.push(tutorial)
+      }
+    }
+    
+    // 确保按sortOrder排序
+    tutorials.sort((a, b) => a.sortOrder - b.sortOrder)
+    
+    return tutorials
+  } catch (error) {
+    logger.error(`❌ Failed to get all tutorials:`, error)
+    throw error
+  }
+}
+
+redisClient.updateTutorial = async function (id, updates) {
+  try {
+    const client = this.getClientSafe()
+    const key = `tutorial:${id}`
+    const listKey = 'tutorials:list'
+    
+    // 检查教程是否存在
+    const existing = await this.getTutorial(id)
+    if (!existing) {
+      throw new Error(`Tutorial ${id} not found`)
+    }
+    
+    // 更新数据
+    const updatedData = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+    
+    // 转换类型为字符串
+    if (typeof updatedData.sortOrder === 'number') {
+      updatedData.sortOrder = updatedData.sortOrder.toString()
+    }
+    if (typeof updatedData.isActive === 'boolean') {
+      updatedData.isActive = updatedData.isActive.toString()
+    }
+    
+    // 更新hash
+    await client.hset(key, updatedData)
+    
+    // 更新sorted set的score（sortOrder）
+    const sortOrder = parseInt(updatedData.sortOrder) || 0
+    await client.zadd(listKey, sortOrder, id)
+    
+    logger.debug(`✅ Updated tutorial: ${id}`)
+    return {
+      ...updatedData,
+      sortOrder: parseInt(updatedData.sortOrder) || 0,
+      isActive: updatedData.isActive === 'true'
+    }
+  } catch (error) {
+    logger.error(`❌ Failed to update tutorial ${id}:`, error)
+    throw error
+  }
+}
+
+redisClient.deleteTutorial = async function (id) {
+  try {
+    const client = this.getClientSafe()
+    const key = `tutorial:${id}`
+    const listKey = 'tutorials:list'
+    
+    // 删除hash
+    await client.del(key)
+    
+    // 从sorted set中移除
+    await client.zrem(listKey, id)
+    
+    logger.debug(`✅ Deleted tutorial: ${id}`)
+    return true
+  } catch (error) {
+    logger.error(`❌ Failed to delete tutorial ${id}:`, error)
+    throw error
+  }
+}
+
 module.exports = redisClient

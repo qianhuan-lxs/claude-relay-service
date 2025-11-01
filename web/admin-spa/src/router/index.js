@@ -8,6 +8,8 @@ const LoginView = () => import('@/views/LoginView.vue')
 const UserLoginView = () => import('@/views/UserLoginView.vue')
 const UserDashboardView = () => import('@/views/UserDashboardView.vue')
 const UserManagementView = () => import('@/views/UserManagementView.vue')
+const AnnouncementManagementView = () => import('@/views/AnnouncementManagementView.vue')
+const TutorialManagementView = () => import('@/views/TutorialManagementView.vue')
 const MainLayout = () => import('@/components/layout/MainLayout.vue')
 const DashboardView = () => import('@/views/DashboardView.vue')
 const ApiKeysView = () => import('@/views/ApiKeysView.vue')
@@ -130,6 +132,30 @@ const routes = [
         path: '',
         name: 'UserManagement',
         component: UserManagementView
+      }
+    ]
+  },
+  {
+    path: '/announcement-management',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'AnnouncementManagement',
+        component: AnnouncementManagementView
+      }
+    ]
+  },
+  {
+    path: '/tutorial-management',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'TutorialManagement',
+        component: TutorialManagementView
       }
     ]
   },

@@ -29,6 +29,7 @@ const fs = require('fs')
 const path = require('path')
 const config = require('../../config/config')
 const ProxyHelper = require('../utils/proxyHelper')
+const { v4: uuidv4 } = require('uuid')
 
 const router = express.Router()
 
@@ -9217,6 +9218,220 @@ router.post('/droid-accounts/:id/refresh-token', authenticateAdmin, async (req, 
   } catch (error) {
     logger.error(`Failed to refresh Droid account token ${req.params.id}:`, error)
     return res.status(500).json({ error: 'Failed to refresh token', message: error.message })
+  }
+})
+
+// 📢 公告管理
+// 获取所有公告
+router.get('/announcements', authenticateAdmin, async (req, res) => {
+  try {
+    const activeOnly = req.query.activeOnly === 'true'
+    const announcements = await redis.getAllAnnouncements(activeOnly)
+    return res.json({ success: true, data: announcements })
+  } catch (error) {
+    logger.error('Failed to get announcements:', error)
+    return res.status(500).json({ error: 'Failed to get announcements', message: error.message })
+  }
+})
+
+// 创建公告
+router.post('/announcements', authenticateAdmin, async (req, res) => {
+  try {
+    const { title, content, type = 'normal', isPinned = false, isActive = true } = req.body
+
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' })
+    }
+
+    if (type !== 'important' && type !== 'normal') {
+      return res.status(400).json({ error: 'Type must be "important" or "normal"' })
+    }
+
+    const id = uuidv4()
+    const createdBy = req.user?.username || 'admin'
+
+    const announcement = await redis.createAnnouncement({
+      id,
+      title,
+      content,
+      type,
+      isPinned,
+      isActive,
+      createdBy
+    })
+
+    logger.info(`📢 Admin created announcement: ${id}`)
+    return res.json({ success: true, data: announcement })
+  } catch (error) {
+    logger.error('Failed to create announcement:', error)
+    return res.status(500).json({ error: 'Failed to create announcement', message: error.message })
+  }
+})
+
+// 获取单个公告
+router.get('/announcements/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const announcement = await redis.getAnnouncement(id)
+
+    if (!announcement) {
+      return res.status(404).json({ error: 'Announcement not found' })
+    }
+
+    return res.json({ success: true, data: announcement })
+  } catch (error) {
+    logger.error(`Failed to get announcement ${req.params.id}:`, error)
+    return res.status(500).json({ error: 'Failed to get announcement', message: error.message })
+  }
+})
+
+// 更新公告
+router.put('/announcements/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { title, content, type, isPinned, isActive } = req.body
+
+    const updates = {}
+    if (title !== undefined && title !== null && title !== '') updates.title = title
+    if (content !== undefined && content !== null && content !== '') updates.content = content
+    if (type !== undefined && type !== null && type !== '') {
+      if (type !== 'important' && type !== 'normal') {
+        return res.status(400).json({ error: 'Type must be "important" or "normal"' })
+      }
+      updates.type = type
+    }
+    if (isPinned !== undefined) updates.isPinned = isPinned
+    if (isActive !== undefined) updates.isActive = isActive
+
+    const announcement = await redis.updateAnnouncement(id, updates)
+
+    logger.info(`📢 Admin updated announcement: ${id}`)
+    return res.json({ success: true, data: announcement })
+  } catch (error) {
+    logger.error(`Failed to update announcement ${req.params.id}:`, error)
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ error: error.message })
+    }
+    return res.status(500).json({ error: 'Failed to update announcement', message: error.message })
+  }
+})
+
+// 删除公告
+router.delete('/announcements/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    await redis.deleteAnnouncement(id)
+
+    logger.info(`📢 Admin deleted announcement: ${id}`)
+    return res.json({ success: true, message: 'Announcement deleted successfully' })
+  } catch (error) {
+    logger.error(`Failed to delete announcement ${req.params.id}:`, error)
+    return res.status(500).json({ error: 'Failed to delete announcement', message: error.message })
+  }
+})
+
+// 📚 教程管理
+// 获取所有教程
+router.get('/tutorials', authenticateAdmin, async (req, res) => {
+  try {
+    const activeOnly = req.query.activeOnly === 'true'
+    const tutorials = await redis.getAllTutorials(activeOnly)
+    return res.json({ success: true, data: tutorials })
+  } catch (error) {
+    logger.error('Failed to get tutorials:', error)
+    return res.status(500).json({ error: 'Failed to get tutorials', message: error.message })
+  }
+})
+
+// 创建教程
+router.post('/tutorials', authenticateAdmin, async (req, res) => {
+  try {
+    const { title, content, category = '快速开始', sortOrder = 0, isActive = true } = req.body
+
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' })
+    }
+
+    const id = uuidv4()
+    const createdBy = req.user?.username || 'admin'
+
+    const tutorial = await redis.createTutorial({
+      id,
+      title,
+      content,
+      category,
+      sortOrder,
+      isActive,
+      createdBy
+    })
+
+    logger.info(`📚 Admin created tutorial: ${id}`)
+    return res.json({ success: true, data: tutorial })
+  } catch (error) {
+    logger.error('Failed to create tutorial:', error)
+    return res.status(500).json({ error: 'Failed to create tutorial', message: error.message })
+  }
+})
+
+// 获取单个教程
+router.get('/tutorials/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const tutorial = await redis.getTutorial(id)
+
+    if (!tutorial) {
+      return res.status(404).json({ error: 'Tutorial not found' })
+    }
+
+    return res.json({ success: true, data: tutorial })
+  } catch (error) {
+    logger.error(`Failed to get tutorial ${req.params.id}:`, error)
+    return res.status(500).json({ error: 'Failed to get tutorial', message: error.message })
+  }
+})
+
+// 更新教程
+router.put('/tutorials/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { title, content, category, sortOrder, isActive } = req.body
+
+    const updates = {}
+    if (title !== undefined) updates.title = title
+    if (content !== undefined) updates.content = content
+    if (category !== undefined) updates.category = category
+    if (sortOrder !== undefined) {
+      if (typeof sortOrder !== 'number') {
+        return res.status(400).json({ error: 'sortOrder must be a number' })
+      }
+      updates.sortOrder = sortOrder
+    }
+    if (isActive !== undefined) updates.isActive = isActive
+
+    const tutorial = await redis.updateTutorial(id, updates)
+
+    logger.info(`📚 Admin updated tutorial: ${id}`)
+    return res.json({ success: true, data: tutorial })
+  } catch (error) {
+    logger.error(`Failed to update tutorial ${req.params.id}:`, error)
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ error: error.message })
+    }
+    return res.status(500).json({ error: 'Failed to update tutorial', message: error.message })
+  }
+})
+
+// 删除教程
+router.delete('/tutorials/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    await redis.deleteTutorial(id)
+
+    logger.info(`📚 Admin deleted tutorial: ${id}`)
+    return res.json({ success: true, message: 'Tutorial deleted successfully' })
+  } catch (error) {
+    logger.error(`Failed to delete tutorial ${req.params.id}:`, error)
+    return res.status(500).json({ error: 'Failed to delete tutorial', message: error.message })
   }
 })
 

@@ -65,6 +65,8 @@ const tabs = computed(() => {
   })
 
   baseTabs.push(
+    { key: 'announcementManagement', name: '公告管理', shortName: '公告', icon: 'fas fa-bullhorn' },
+    { key: 'tutorialManagement', name: '教程管理', shortName: '教程管理', icon: 'fas fa-book' },
     { key: 'tutorial', name: '使用教程', shortName: '教程', icon: 'fas fa-graduation-cap' },
     { key: 'settings', name: '系统设置', shortName: '设置', icon: 'fas fa-cogs' }
   )
