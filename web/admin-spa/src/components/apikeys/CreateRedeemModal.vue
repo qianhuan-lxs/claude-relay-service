@@ -144,16 +144,15 @@ const handleSubmit = async () => {
     console.log('提交兑换码创建请求:', payload)
     const response = await apiClient.post('/admin/redeems', payload)
     console.log('兑换码创建响应:', response)
-    console.log('响应数据:', response.data)
 
-    if (response.data && response.data.success) {
-      createdRedeem.value = response.data.data
+    if (response && response.success) {
+      createdRedeem.value = response.data
       console.log('设置createdRedeem:', createdRedeem.value)
       showToast('兑换码创建成功！', 'success')
-      emit('success', response.data.data)
+      emit('success', response.data)
     } else {
-      console.error('API返回失败:', response.data)
-      throw new Error(response.data?.message || '创建失败')
+      console.error('API返回失败:', response)
+      throw new Error(response?.message || '创建失败')
     }
   } catch (error) {
     console.error('创建兑换码失败:', error)

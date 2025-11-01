@@ -63,7 +63,7 @@
           <!-- 二维码图片 -->
           <div class="bg-white p-4 rounded-xl inline-block shadow-lg">
             <img
-              src="/image.png"
+              :src="qrCodeUrl"
               alt="QQ客服二维码"
               class="w-64 h-64 object-contain rounded-lg"
               @error="handleImageError"
@@ -81,6 +81,10 @@
 import { ref } from 'vue'
 
 const showModal = ref(false)
+
+// public 目录下的文件会被直接复制到构建输出的根目录
+// 使用字符串字面量，避免 Vite 在构建时尝试解析
+const qrCodeUrl = '/image.png'
 
 const handleImageError = (event) => {
   console.error('Failed to load QR code image:', event)
