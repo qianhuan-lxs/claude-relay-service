@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid')
 const config = require('../../config/config')
 const apiKeyService = require('../services/apiKeyService')
 const userService = require('../services/userService')
+const clientAuthService = require('../services/clientAuthService')
 const logger = require('../utils/logger')
 const redis = require('../models/redis')
 // const { RateLimiterRedis } = require('rate-limiter-flexible') // 暂时未使用
@@ -754,18 +755,47 @@ const authenticateUser = async (req, res, next) => {
       })
     }
 
-    // 验证用户会话
-    const sessionValidation = await userService.validateUserSession(sessionToken)
+    // 验证用户会话 - 首先尝试用户会话系统（user_session:）
+    let sessionValidation = await userService.validateUserSession(sessionToken)
+    let session, user
 
+    // 如果用户会话验证失败，尝试客户端会话系统（client_session:）
     if (!sessionValidation) {
+      const clientSession = await clientAuthService.validateSession(sessionToken)
+      if (clientSession) {
+        // 客户端会话验证成功，获取用户信息
+        const clientUser = await clientAuthService.getUserById(clientSession.userId)
+        if (clientUser && clientUser.isActive) {
+          // 转换为用户会话格式
+          session = clientSession
+          user = {
+            id: clientUser.id,
+            username: clientUser.username,
+            email: clientUser.email,
+            displayName: clientUser.displayName || clientUser.username,
+            firstName: clientUser.firstName || '',
+            lastName: clientUser.lastName || '',
+            role: clientUser.role || 'user',
+            isActive: clientUser.isActive
+          }
+          sessionValidation = { session, user }
+          logger.debug(`✅ Client session validated for user: ${user.username}`)
+        }
+      }
+    } else {
+      // 用户会话验证成功
+      const validation = sessionValidation
+      session = validation.session
+      user = validation.user
+    }
+
+    if (!sessionValidation || !user) {
       logger.security(`🔒 Invalid user session token attempt from ${req.ip || 'unknown'}`)
       return res.status(401).json({
         error: 'Invalid session token',
         message: 'Invalid or expired user session'
       })
     }
-
-    const { session, user } = sessionValidation
 
     // 检查用户是否被禁用
     if (!user.isActive) {
