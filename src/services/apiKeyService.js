@@ -66,6 +66,53 @@ class ApiKeyService {
     this.prefix = config.security.apiKeyPrefix
   }
 
+  // 🔐 获取加密密钥
+  _getEncryptionKey() {
+    const raw = config.security.encryptionKey || ''
+    const buf = Buffer.alloc(32)
+    Buffer.from(String(raw)).copy(buf)
+    return buf
+  }
+
+  // 🔐 加密原始 API Key
+  _encryptPlaintext(plaintext) {
+    if (!plaintext) {
+      return ''
+    }
+    try {
+      const key = this._getEncryptionKey()
+      const iv = crypto.randomBytes(12)
+      const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
+      const enc = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
+      const tag = cipher.getAuthTag()
+      return Buffer.concat([iv, tag, enc]).toString('base64')
+    } catch (error) {
+      logger.error('❌ Failed to encrypt plaintext:', error)
+      return ''
+    }
+  }
+
+  // 🔓 解密原始 API Key
+  _decryptPlaintext(blob) {
+    if (!blob) {
+      return ''
+    }
+    try {
+      const buf = Buffer.from(blob, 'base64')
+      const iv = buf.subarray(0, 12)
+      const tag = buf.subarray(12, 28)
+      const enc = buf.subarray(28)
+      const key = this._getEncryptionKey()
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
+      decipher.setAuthTag(tag)
+      const dec = Buffer.concat([decipher.update(enc), decipher.final()])
+      return dec.toString('utf8')
+    } catch (error) {
+      logger.error('❌ Failed to decrypt plaintext:', error)
+      return ''
+    }
+  }
+
   // 🔑 生成新的API Key
   async generateApiKey(options = {}) {
     const {
@@ -117,6 +164,7 @@ class ApiKeyService {
       name,
       description,
       apiKey: hashedKey,
+      plaintextKeyEnc: this._encryptPlaintext(apiKey), // 加密存储原始 API Key
       tokenLimit: String(tokenLimit ?? 0),
       concurrencyLimit: String(concurrencyLimit ?? 0),
       rateLimitWindow: String(rateLimitWindow ?? 0),
@@ -1476,11 +1524,17 @@ class ApiKeyService {
         const dailyCost = (await redis.getDailyCost(key.id)) || 0
         const costStats = await redis.getCostStats(key.id)
 
+        // 解密原始 API Key（如果存在）
+        let plaintextKey = null
+        if (key.plaintextKeyEnc) {
+          plaintextKey = this._decryptPlaintext(key.plaintextKeyEnc)
+        }
+
         userKeysWithUsage.push({
           id: key.id,
           name: key.name,
           description: key.description,
-          key: key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null, // 只显示前缀和后4位
+          key: plaintextKey || (key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null), // 返回原始值或预览
           tokenLimit: parseInt(key.tokenLimit || 0),
           isActive: key.isActive === 'true',
           createdAt: key.createdAt,

@@ -260,10 +260,8 @@ router.get('/api-keys', authenticateUser, async (req, res) => {
         dailyCostLimit: key.dailyCostLimit,
         totalCost: key.totalCost,
         totalCostLimit: key.totalCostLimit,
-        // 不返回实际的key值，只返回前缀和后几位
-        keyPreview: key.key
-          ? `${key.key.substring(0, 8)}...${key.key.substring(key.key.length - 4)}`
-          : null,
+        // 返回完整的原始 API Key（已解密）或预览（如果不存在原始值）
+        key: key.key || null,
         // Include deletion fields for deleted keys
         isDeleted: key.isDeleted,
         deletedAt: key.deletedAt,
