@@ -1719,13 +1719,9 @@ class ApiKeyService {
         startDate.setDate(today.getDate() - 6) // 最近7天（包括今天）
       } else if (period === 'month') {
         startDate.setDate(today.getDate() - 29) // 最近30天（包括今天）
-      }
-      // period === 'all' 时，不设置startDate，获取所有数据
-
-      // 生成日期范围列表
-      if (period === 'all') {
-        // 对于'all'，我们需要获取所有可能的日期，但这可能很慢，所以我们使用keys模式
-        // 实际使用时，我们可以限制一个合理的范围，比如最近365天
+      } else if (period === 'all') {
+        // 对于'all'，获取所有有数据的日期（通过查找所有 usage:daily:* 键）
+        // 但为了性能，我们限制为最近365天，或者从第一个有数据的日期开始
         const maxDate = new Date(today)
         maxDate.setDate(today.getDate() - 365) // 最多获取最近365天
         startDate = maxDate
@@ -1748,6 +1744,29 @@ class ApiKeyService {
 
       for (const keyId of keyIds) {
         try {
+          // 对于 'all' 周期，尝试查找所有有数据的日期
+          if (period === 'all') {
+            // 查找所有该 key 的 daily 统计键
+            const dailyKeysPattern = `usage:daily:${keyId}:*`
+            const allDailyKeys = await client.keys(dailyKeysPattern)
+            
+            // 从键中提取日期并添加到 dateRange（如果还没有）
+            const existingDates = new Set(dateRange)
+            for (const key of allDailyKeys) {
+              const match = key.match(/usage:daily:[^:]+:(.+)/)
+              if (match) {
+                const dateStr = match[1]
+                if (!existingDates.has(dateStr)) {
+                  dateRange.push(dateStr)
+                  existingDates.add(dateStr)
+                }
+              }
+            }
+            
+            // 对日期进行排序
+            dateRange.sort((a, b) => a.localeCompare(b))
+          }
+          
           // 获取指定日期范围的daily统计
           for (const dateStr of dateRange) {
             const dailyKey = `usage:daily:${keyId}:${dateStr}`
@@ -1907,8 +1926,17 @@ class ApiKeyService {
           }
 
           // 汇总总体数据（根据period筛选）
-          if (period === 'all') {
-            // 对于'all'，使用总统计数据
+          // 注意：对于 'all'，我们仍然从 dailyStats 汇总，因为 dailyStats 已经包含了所有有数据的日期
+          // 这样可以确保 total 和 dailyStats 的数据一致
+          for (const dailyStat of dailyStatsMap.values()) {
+            stats.totalRequests += dailyStat.requests
+            stats.totalInputTokens += dailyStat.inputTokens
+            stats.totalOutputTokens += dailyStat.outputTokens
+            stats.totalCost += dailyStat.cost
+          }
+          
+          // 对于 'all'，如果 dailyStats 为空或数据不完整，尝试使用总统计数据作为补充
+          if (period === 'all' && dailyStatsMap.size === 0) {
             const keyStats = await redis.getUsageStats(keyId)
             const costStats = await redis.getCostStats(keyId)
 
@@ -1918,14 +1946,6 @@ class ApiKeyService {
               stats.totalOutputTokens += keyStats.total.outputTokens || 0
             }
             stats.totalCost += costStats?.total || 0
-          } else {
-            // 对于week/month，从dailyStats汇总
-            for (const dailyStat of dailyStatsMap.values()) {
-              stats.totalRequests += dailyStat.requests
-              stats.totalInputTokens += dailyStat.inputTokens
-              stats.totalOutputTokens += dailyStat.outputTokens
-              stats.totalCost += dailyStat.cost
-            }
           }
         } catch (keyError) {
           logger.error(`❌ Error getting stats for key ${keyId}:`, keyError)

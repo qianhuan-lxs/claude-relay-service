@@ -233,9 +233,8 @@ function modelPercent(m) {
 }
 
 onMounted(() => {
-  if (!stats.value) {
-    statistics.fetchUsageStats('week')
-  }
+  // 进入页面时立即加载数据
+  statistics.fetchUsageStats(period.value || 'week')
   statistics.fetchUserApiKeys(true)
 })
 
