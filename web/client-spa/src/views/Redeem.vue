@@ -167,11 +167,34 @@ async function onSubmit() {
   }
 }
 
-function copy(text) {
-  navigator.clipboard?.writeText(text).then(() => {
-    // 可以添加一个成功提示
-    console.log('已复制到剪贴板')
-  })
+async function copy(text) {
+  if (!text) return
+  
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+      // 显示成功提示
+      alert('已复制到剪贴板')
+    } else {
+      // 降级方案：使用传统方法
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        alert('已复制到剪贴板')
+      } catch (err) {
+        alert('复制失败，请手动复制')
+      }
+      document.body.removeChild(textArea)
+    }
+  } catch (err) {
+    console.error('复制失败:', err)
+    alert('复制失败，请手动复制')
+  }
 }
 </script>
 
