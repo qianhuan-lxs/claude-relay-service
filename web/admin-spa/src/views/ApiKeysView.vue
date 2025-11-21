@@ -498,7 +498,7 @@
                         <div class="flex items-center gap-2">
                           <code
                             v-if="key.key || key.apiKey"
-                            class="max-w-full truncate rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                            class="max-w-full truncate rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200"
                             :title="key.key || key.apiKey"
                           >
                             {{ key.key || key.apiKey }}
@@ -1229,11 +1229,11 @@
 
               <!-- API Key 显示 -->
               <div class="mb-3 flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-700">
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">API Key</p>
+                <div class="min-w-0 flex-1">
+                  <p class="mb-1 text-xs text-gray-600 dark:text-gray-400">API Key</p>
                   <code
                     v-if="key.key || key.apiKey"
-                    class="block max-w-full truncate rounded bg-white px-2 py-1 text-xs font-mono text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                    class="block max-w-full truncate rounded bg-white px-2 py-1 font-mono text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-200"
                     :title="key.key || key.apiKey"
                   >
                     {{ key.key || key.apiKey }}
@@ -2752,7 +2752,7 @@ const loadRedeems = async () => {
       throw new Error(res?.message || '获取兑换码失败')
     }
   } catch (error) {
-    console.error('加载兑换码失败:', error)
+    // console.error('加载兑换码失败:', error)
     showToast('加载兑换码失败', 'error')
     redeems.value = []
   } finally {
@@ -2782,7 +2782,7 @@ const disableRedeem = async (code) => {
       throw new Error(response.data?.message || '禁用失败')
     }
   } catch (error) {
-    console.error('禁用兑换码失败:', error)
+    // console.error('禁用兑换码失败:', error)
     showToast('禁用兑换码失败', 'error')
   }
 }
@@ -2798,7 +2798,7 @@ const enableRedeem = async (code) => {
       throw new Error(response.data?.message || '启用失败')
     }
   } catch (error) {
-    console.error('启用兑换码失败:', error)
+    // console.error('启用兑换码失败:', error)
     showToast('启用兑换码失败', 'error')
   }
 }
@@ -2818,7 +2818,7 @@ const deleteRedeem = async (code) => {
       throw new Error(response.data?.message || '删除失败')
     }
   } catch (error) {
-    console.error('删除兑换码失败:', error)
+    // console.error('删除兑换码失败:', error)
     showToast('删除兑换码失败', 'error')
   }
 }
@@ -4264,7 +4264,7 @@ const copyToClipboard = async (text) => {
       document.body.removeChild(textArea)
     }
   } catch (err) {
-    console.error('复制失败:', err)
+    // console.error('复制失败:', err)
     showToast('复制失败，请手动复制', 'error')
   }
 }
