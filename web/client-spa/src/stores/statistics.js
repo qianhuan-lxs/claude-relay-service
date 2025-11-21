@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { setAuthToken } from '../config/api'
 
 // 独立于已配置 baseURL 的 api 实例，使用绝对路径避免 /api 前缀冲突
 const http = axios.create()
@@ -14,6 +15,36 @@ http.interceptors.request.use((config) => {
   } catch (_) {}
   return config
 })
+
+// 响应拦截器：处理登录过期
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 处理 401 未授权错误（登录过期）
+    if (error.response?.status === 401) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || '登录已过期，请重新登录'
+      
+      // 清除本地存储的认证信息
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('userData')
+      setAuthToken('')
+      
+      // 显示提示信息并跳转到登录页
+      if (typeof window !== 'undefined') {
+        // 使用 alert 作为简单的提示方式
+        alert(errorMessage)
+        
+        // 使用 window.location 跳转，避免循环依赖
+        const currentPath = window.location.pathname
+        if (!currentPath.includes('/auth/login')) {
+          window.location.href = '/auth/login'
+        }
+      }
+    }
+    
+    return Promise.reject(error)
+  }
+)
 
 export const useStatisticsStore = defineStore('statistics', {
   state: () => ({
