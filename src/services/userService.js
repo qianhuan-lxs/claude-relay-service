@@ -554,6 +554,7 @@ class UserService {
   async getUserStats() {
     try {
       const client = redis.getClientSafe()
+      const apiKeyService = require('./apiKeyService')
 
       // 同时查找 LDAP 用户和客户端注册的用户
       const ldapKeys = await client.keys(`${this.userPrefix}*`)
@@ -574,6 +575,7 @@ class UserService {
         }
       }
 
+      // 统计用户信息
       for (const key of allKeys) {
         try {
           // 只处理字符串类型的 key
@@ -624,24 +626,6 @@ class UserService {
             } else {
               stats.regularUsers++
             }
-
-            // Calculate dynamic usage stats for each user
-            try {
-              const usageStats = await this.calculateUserUsageStats(user.id)
-              stats.totalApiKeys += usageStats.apiKeyCount
-              stats.totalUsage.requests += usageStats.totalUsage.requests
-              stats.totalUsage.inputTokens += usageStats.totalUsage.inputTokens
-              stats.totalUsage.outputTokens += usageStats.totalUsage.outputTokens
-              stats.totalUsage.totalCost += usageStats.totalUsage.totalCost
-            } catch (error) {
-              logger.error(`❌ Error calculating usage for user ${user.id} in stats:`, error)
-              // Fallback to stored values if calculation fails
-              stats.totalApiKeys += user.apiKeyCount || 0
-              stats.totalUsage.requests += user.totalUsage?.requests || 0
-              stats.totalUsage.inputTokens += user.totalUsage?.inputTokens || 0
-              stats.totalUsage.outputTokens += user.totalUsage?.outputTokens || 0
-              stats.totalUsage.totalCost += user.totalUsage?.totalCost || 0
-            }
           }
         } catch (error) {
           // 跳过类型不匹配或解析错误的 key
@@ -651,6 +635,65 @@ class UserService {
             logger.error(`❌ Error processing user key ${key} in stats:`, error)
           }
           continue
+        }
+      }
+
+      // 统计所有 API keys 的使用情况（与 /admin/dashboard 保持一致）
+      // 直接获取所有 API keys 并累加使用统计，而不是通过用户来累加
+      try {
+        const allApiKeys = await apiKeyService.getAllApiKeys(false) // 不包括已删除的
+
+        stats.totalApiKeys = allApiKeys.length
+
+        // 累加所有 API keys 的使用统计
+        for (const apiKey of allApiKeys) {
+          if (apiKey.usage && apiKey.usage.total) {
+            stats.totalUsage.requests += apiKey.usage.total.requests || 0
+            stats.totalUsage.inputTokens += apiKey.usage.total.inputTokens || 0
+            stats.totalUsage.outputTokens += apiKey.usage.total.outputTokens || 0
+            // 使用 totalCost 字段（与 /admin/dashboard 保持一致）
+            stats.totalUsage.totalCost += apiKey.totalCost || apiKey.usage.total.cost || apiKey.usage.total.totalCost || 0
+          }
+        }
+
+        logger.debug(
+          `📊 User stats: ${stats.totalUsers} users, ${stats.totalApiKeys} API keys, ${stats.totalUsage.requests} requests, $${stats.totalUsage.totalCost.toFixed(4)} total cost`
+        )
+      } catch (error) {
+        logger.error('❌ Error calculating API key stats in getUserStats:', error)
+        // 如果获取所有 API keys 失败，回退到通过用户累加的方式
+        for (const key of allKeys) {
+          try {
+            const type = await client.type(key)
+            if (type !== 'string') continue
+
+            const userData = await client.get(key)
+            if (userData) {
+              let user = JSON.parse(userData)
+              if (key.startsWith('client_user:')) {
+                user = {
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  role: user.role || 'user',
+                  isActive: user.isActive !== false
+                }
+              }
+
+              try {
+                const usageStats = await this.calculateUserUsageStats(user.id)
+                stats.totalApiKeys += usageStats.apiKeyCount
+                stats.totalUsage.requests += usageStats.totalUsage.requests
+                stats.totalUsage.inputTokens += usageStats.totalUsage.inputTokens
+                stats.totalUsage.outputTokens += usageStats.totalUsage.outputTokens
+                stats.totalUsage.totalCost += usageStats.totalUsage.totalCost
+              } catch (err) {
+                logger.error(`❌ Error calculating usage for user ${user.id} in stats:`, err)
+              }
+            }
+          } catch (err) {
+            continue
+          }
         }
       }
 
