@@ -328,6 +328,15 @@ class ApiKeyService {
       ])
       const totalCost = costStats?.total || 0
 
+      // 🔄 自动续期 Redis 过期时间（防止数据因 Redis TTL 过期而丢失）
+      // 每次验证 API Key 时续期，确保活跃的 API Key 不会因为 Redis TTL 过期而丢失
+      try {
+        await redis.extendApiKeyTTL(keyData.id)
+      } catch (error) {
+        logger.debug(`⚠️ Failed to extend API key TTL for ${keyData.id}:`, error)
+        // 续期失败不影响验证流程，只记录日志
+      }
+
       // 更新最后使用时间（优化：只在实际API调用时更新，而不是验证时）
       // 注意：lastUsedAt的更新已移至recordUsage方法中
 
@@ -755,6 +764,16 @@ class ApiKeyService {
           } else if (field === 'expiresAt' || field === 'activatedAt') {
             // 日期字段保持原样，不要toString()
             updatedData[field] = value || ''
+          } else if (field === 'userId' || field === 'userUsername') {
+            // 特殊处理 userId 和 userUsername：如果值为 null/undefined/空字符串，且原值存在，则保留原值
+            // 只有当新值明确提供且非空时才更新
+            if (value !== null && value !== undefined && value !== '') {
+              updatedData[field] = String(value)
+            } else if (updatedData[field] === '' || !updatedData[field]) {
+              // 如果原值也是空的，才允许设置为空字符串
+              updatedData[field] = ''
+            }
+            // 否则保留原值，不做修改
           } else {
             updatedData[field] = (value !== null && value !== undefined ? value : '').toString()
           }
@@ -1510,7 +1529,38 @@ class ApiKeyService {
   async getUserApiKeys(userId, includeDeleted = false) {
     try {
       const allKeys = await redis.getAllApiKeys()
-      let userKeys = allKeys.filter((key) => key.userId === userId)
+      // 确保 userId 类型匹配（Redis 中所有字段都是字符串）
+      const userIdStr = String(userId)
+      
+      // 调试：检查所有 API Keys 的 userId 字段
+      const userIdsInKeys = allKeys.map(key => ({
+        id: key.id,
+        name: key.name,
+        userId: key.userId,
+        userIdType: typeof key.userId,
+        userIdValue: String(key.userId || '')
+      }))
+      
+      logger.debug(
+        `🔍 getUserApiKeys: userId=${userIdStr} (type: ${typeof userId}), totalKeys=${allKeys.length}`
+      )
+      logger.debug(
+        `🔍 Sample userIds in keys: ${JSON.stringify(userIdsInKeys.slice(0, 5))}`
+      )
+      
+      let userKeys = allKeys.filter((key) => {
+        // 严格匹配 userId（确保类型一致）
+        const keyUserId = String(key.userId || '')
+        const matches = keyUserId === userIdStr
+        if (matches) {
+          logger.debug(`✅ Matched API Key: ${key.id} (${key.name}), userId: ${keyUserId}`)
+        }
+        return matches
+      })
+      
+      logger.debug(
+        `🔍 getUserApiKeys: userId=${userIdStr}, totalKeys=${allKeys.length}, userKeys=${userKeys.length}`
+      )
 
       // 默认过滤掉已删除的API Keys
       if (!includeDeleted) {
