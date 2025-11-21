@@ -96,13 +96,13 @@
               
               <!-- 图表区域 -->
               <div ref="chartContainer" class="ml-12 mr-2 h-full pb-8 relative" @mouseleave="hoveredIndex = null">
-                <svg :width="chartWidth" :height="chartHeight" class="w-full h-full">
+                <svg :width="chartWidth" :height="chartHeight" class="w-full" style="max-width: 100%; height: 200px;" preserveAspectRatio="none">
                   <!-- 网格线 -->
                   <g v-for="(tick, idx) in yAxisTicks" :key="`grid-${idx}`">
                     <line
-                      :x1="0"
+                      :x1="padding.left"
                       :y1="getYPosition(tick)"
-                      :x2="chartWidth"
+                      :x2="chartWidth - padding.right"
                       :y2="getYPosition(tick)"
                       stroke="rgba(255, 255, 255, 0.1)"
                       stroke-width="1"
@@ -112,10 +112,11 @@
                   
                   <!-- 折线 -->
                   <polyline
+                    v-if="linePoints"
                     :points="linePoints"
                     fill="none"
                     stroke="rgb(59, 130, 246)"
-                    stroke-width="2"
+                    stroke-width="2.5"
                     class="transition-all duration-300"
                   />
                   
@@ -125,21 +126,22 @@
                     :key="`point-${idx}`"
                     :cx="point.x"
                     :cy="point.y"
-                    r="4"
+                    :r="hoveredIndex === idx ? 6 : 4"
                     fill="rgb(59, 130, 246)"
+                    stroke="white"
+                    stroke-width="2"
                     class="transition-all duration-300 cursor-pointer"
-                    :class="{ 'r-6': hoveredIndex === idx }"
                     @mouseenter="hoveredIndex = idx"
                     @mouseleave="hoveredIndex = null"
                   />
                   
                   <!-- Hover 高亮线 -->
                   <line
-                    v-if="hoveredIndex !== null"
-                    :x1="chartPoints[hoveredIndex]?.x || 0"
-                    :y1="0"
-                    :x2="chartPoints[hoveredIndex]?.x || 0"
-                    :y2="chartHeight"
+                    v-if="hoveredIndex !== null && chartPoints[hoveredIndex]"
+                    :x1="chartPoints[hoveredIndex].x"
+                    :y1="padding.top"
+                    :x2="chartPoints[hoveredIndex].x"
+                    :y2="chartHeight - padding.bottom"
                     stroke="rgba(255, 255, 255, 0.3)"
                     stroke-width="1"
                     stroke-dasharray="4,4"
@@ -273,9 +275,31 @@ const hoveredIndex = ref(null)
 
 // 图表尺寸（响应式）
 const chartContainer = ref(null)
-const chartWidth = ref(600)
+const chartWidth = ref(500)
 const chartHeight = 200
 const padding = { top: 10, right: 10, bottom: 30, left: 10 }
+
+// 初始化图表宽度
+onMounted(() => {
+  // 进入页面时立即加载数据
+  statistics.fetchUsageStats(period.value || 'week')
+  statistics.fetchUserApiKeys(true)
+  
+  // 监听容器尺寸变化
+  nextTick(() => {
+    if (chartContainer.value) {
+      // 立即设置初始宽度
+      chartWidth.value = chartContainer.value.offsetWidth - 50
+      
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          chartWidth.value = entry.contentRect.width - 50 // 减去左右padding
+        }
+      })
+      resizeObserver.observe(chartContainer.value)
+    }
+  })
+})
 
 
 // Y轴刻度
@@ -294,11 +318,12 @@ const yAxisTicks = computed(() => {
 
 // 计算Y轴位置
 function getYPosition(value) {
-  if (!dailyStats.value?.length) return 0
+  if (!dailyStats.value?.length) return padding.top
   const values = dailyStats.value.map((d) => d.requests || 0)
   const max = Math.max(...values, 1)
   const ratio = value / max
-  return chartHeight - padding.bottom - (chartHeight - padding.top - padding.bottom) * ratio
+  const height = chartHeight - padding.top - padding.bottom
+  return padding.top + height - (height * ratio)
 }
 
 // 计算折线图数据点
@@ -306,7 +331,7 @@ const chartPoints = computed(() => {
   if (!dailyStats.value?.length) return []
   const values = dailyStats.value.map((d) => d.requests || 0)
   const max = Math.max(...values, 1)
-  const width = chartWidth - padding.left - padding.right
+  const width = chartWidth.value - padding.left - padding.right
   const height = chartHeight - padding.top - padding.bottom
   const stepX = dailyStats.value.length > 1 ? width / (dailyStats.value.length - 1) : 0
   
@@ -339,23 +364,6 @@ function modelPercent(m) {
   return `${Math.min(100, Math.round(((m.requests || 0) / total) * 100))}%`
 }
 
-onMounted(() => {
-  // 进入页面时立即加载数据
-  statistics.fetchUsageStats(period.value || 'week')
-  statistics.fetchUserApiKeys(true)
-  
-  // 监听容器尺寸变化
-  nextTick(() => {
-    if (chartContainer.value) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          chartWidth.value = entry.contentRect.width - 50 // 减去左右padding
-        }
-      })
-      resizeObserver.observe(chartContainer.value)
-    }
-  })
-})
 
 function formatDate(value) {
   if (!value) return '-'

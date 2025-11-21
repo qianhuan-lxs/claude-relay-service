@@ -96,12 +96,12 @@
               如果你安装了 Chocolatey 或 Scoop，可以使用命令行安装：
             </p>
             <div
-              class="overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+              class="overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs sm:p-4 sm:text-sm"
             >
-              <div class="mb-2"># 使用 Chocolatey</div>
-              <div class="whitespace-nowrap text-gray-800">choco install nodejs</div>
-              <div class="mb-2 mt-3"># 或使用 Scoop</div>
-              <div class="whitespace-nowrap text-gray-800">scoop install nodejs</div>
+              <div class="mb-2 text-green-400"># 使用 Chocolatey</div>
+              <div class="whitespace-nowrap text-gray-100">choco install nodejs</div>
+              <div class="mb-2 mt-3 text-green-400"># 或使用 Scoop</div>
+              <div class="whitespace-nowrap text-gray-100">scoop install nodejs</div>
             </div>
           </div>
           <div
@@ -167,7 +167,7 @@
           <div
             class="mb-4 overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
           >
-            <div class="mb-2"># 全局安装 Claude Code</div>
+            <div class="mb-2 text-green-400"># 全局安装 Claude Code</div>
             <div class="whitespace-nowrap text-gray-200">
               npm install -g @anthropic-ai/claude-code
             </div>
@@ -246,10 +246,10 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   $env:ANTHROPIC_BASE_URL = "{{ currentBaseUrl }}"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   $env:ANTHROPIC_AUTH_TOKEN = "你的API密钥"
                 </div>
               </div>
@@ -270,13 +270,13 @@
               <div
                 class="mb-3 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 设置用户级环境变量（永久生效）</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 设置用户级环境变量（永久生效）</div>
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::SetEnvironmentVariable("ANTHROPIC_BASE_URL", "{{
                     currentBaseUrl
                   }}", [System.EnvironmentVariableTarget]::User)
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::SetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN",
                   "你的API密钥", [System.EnvironmentVariableTarget]::User)
                 </div>
@@ -285,12 +285,12 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 查看用户级环境变量</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 查看用户级环境变量</div>
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::GetEnvironmentVariable("ANTHROPIC_BASE_URL",
                   [System.EnvironmentVariableTarget]::User)
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::GetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN",
                   [System.EnvironmentVariableTarget]::User)
                 </div>
@@ -349,8 +349,8 @@
               <div
                 class="space-y-1 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">echo $env:ANTHROPIC_BASE_URL</div>
-                <div class="whitespace-nowrap text-gray-800">echo $env:ANTHROPIC_AUTH_TOKEN</div>
+                <div class="whitespace-nowrap text-gray-100">echo $env:ANTHROPIC_BASE_URL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $env:ANTHROPIC_AUTH_TOKEN</div>
               </div>
             </div>
 
@@ -361,8 +361,8 @@
               <div
                 class="space-y-1 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">echo %ANTHROPIC_BASE_URL%</div>
-                <div class="whitespace-nowrap text-gray-800">echo %ANTHROPIC_AUTH_TOKEN%</div>
+                <div class="whitespace-nowrap text-gray-100">echo %ANTHROPIC_BASE_URL%</div>
+                <div class="whitespace-nowrap text-gray-100">echo %ANTHROPIC_AUTH_TOKEN%</div>
               </div>
             </div>
           </div>
@@ -406,13 +406,13 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   $env:GOOGLE_GEMINI_BASE_URL = "{{ geminiBaseUrl }}"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   $env:GEMINI_API_KEY = "你的API密钥"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   $env:GEMINI_MODEL = "gemini-2.5-pro"
                 </div>
               </div>
@@ -433,17 +433,17 @@
               <div
                 class="mb-3 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 设置用户级环境变量（永久生效）</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 设置用户级环境变量（永久生效）</div>
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::SetEnvironmentVariable("GOOGLE_GEMINI_BASE_URL", "{{
                     geminiBaseUrl
                   }}", [System.EnvironmentVariableTarget]::User)
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "你的API密钥",
                   [System.EnvironmentVariableTarget]::User)
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   [System.Environment]::SetEnvironmentVariable("GEMINI_MODEL", "gemini-2.5-pro",
                   [System.EnvironmentVariableTarget]::User)
                 </div>
@@ -463,9 +463,9 @@
               <div
                 class="space-y-1 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">echo $env:GOOGLE_GEMINI_BASE_URL</div>
-                <div class="whitespace-nowrap text-gray-800">echo $env:GEMINI_API_KEY</div>
-                <div class="whitespace-nowrap text-gray-800">echo $env:GEMINI_MODEL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $env:GOOGLE_GEMINI_BASE_URL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $env:GEMINI_API_KEY</div>
+                <div class="whitespace-nowrap text-gray-100">echo $env:GEMINI_MODEL</div>
               </div>
             </div>
           </div>
@@ -542,7 +542,7 @@
                   <div
                     class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
                   >
-                    <div class="whitespace-nowrap text-gray-800">
+                    <div class="whitespace-nowrap text-gray-100">
                       {{ codexConfigContent.authInstructions.platform.command }}
                     </div>
                   </div>
@@ -642,7 +642,7 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">claude</div>
+                <div class="whitespace-nowrap text-gray-100">claude</div>
               </div>
             </div>
 
@@ -653,10 +653,10 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 进入你的项目目录</div>
-                <div class="whitespace-nowrap text-gray-800">cd C:\path\to\your\project</div>
+                <div class="mb-2 text-green-400"># 进入你的项目目录</div>
+                <div class="whitespace-nowrap text-gray-100">cd C:\path\to\your\project</div>
                 <div class="mb-2 mt-2"># 启动 Claude Code</div>
-                <div class="whitespace-nowrap text-gray-800">claude</div>
+                <div class="whitespace-nowrap text-gray-100">claude</div>
               </div>
             </div>
           </div>
@@ -707,7 +707,7 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
                 </div>
               </div>
@@ -774,10 +774,10 @@
             <div
               class="overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
             >
-              <div class="mb-2"># 更新 Homebrew</div>
-              <div class="whitespace-nowrap text-gray-800">brew update</div>
-              <div class="mb-2 mt-3"># 安装 Node.js</div>
-              <div class="whitespace-nowrap text-gray-800">brew install node</div>
+              <div class="mb-2 text-green-400"># 更新 Homebrew</div>
+              <div class="whitespace-nowrap text-gray-100">brew update</div>
+              <div class="mb-2 mt-3 text-green-400"># 安装 Node.js</div>
+              <div class="whitespace-nowrap text-gray-100">brew install node</div>
             </div>
           </div>
           <div class="mb-4">
@@ -870,7 +870,7 @@
           <div
             class="mb-4 overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
           >
-            <div class="mb-2"># 全局安装 Claude Code</div>
+            <div class="mb-2 text-green-400"># 全局安装 Claude Code</div>
             <div class="whitespace-nowrap text-gray-200">
               npm install -g @anthropic-ai/claude-code
             </div>
@@ -944,10 +944,10 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export ANTHROPIC_AUTH_TOKEN="你的API密钥"
                 </div>
               </div>
@@ -968,26 +968,26 @@
               <div
                 class="mb-3 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 zsh (默认)</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 zsh (默认)</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_AUTH_TOKEN="你的API密钥"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.zshrc</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.zshrc</div>
               </div>
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 bash</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 bash</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"' >> ~/.bash_profile
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_AUTH_TOKEN="你的API密钥"' >> ~/.bash_profile
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.bash_profile</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.bash_profile</div>
               </div>
             </div>
           </div>
@@ -1048,13 +1048,13 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export GEMINI_API_KEY="你的API密钥"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export GEMINI_MODEL="gemini-2.5-pro"
                 </div>
               </div>
@@ -1075,32 +1075,32 @@
               <div
                 class="mb-3 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 zsh (默认)</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 zsh (默认)</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_API_KEY="你的API密钥"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_MODEL="gemini-2.5-pro"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.zshrc</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.zshrc</div>
               </div>
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 bash</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 bash</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"' >> ~/.bash_profile
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_API_KEY="你的API密钥"' >> ~/.bash_profile
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_MODEL="gemini-2.5-pro"' >> ~/.bash_profile
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.bash_profile</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.bash_profile</div>
               </div>
             </div>
 
@@ -1114,9 +1114,9 @@
               <div
                 class="space-y-1 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">echo $GOOGLE_GEMINI_BASE_URL</div>
-                <div class="whitespace-nowrap text-gray-800">echo $GEMINI_API_KEY</div>
-                <div class="whitespace-nowrap text-gray-800">echo $GEMINI_MODEL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $GOOGLE_GEMINI_BASE_URL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $GEMINI_API_KEY</div>
+                <div class="whitespace-nowrap text-gray-100">echo $GEMINI_MODEL</div>
               </div>
             </div>
           </div>
@@ -1193,7 +1193,7 @@
                   <div
                     class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
                   >
-                    <div class="whitespace-nowrap text-gray-800">
+                    <div class="whitespace-nowrap text-gray-100">
                       {{ codexConfigContent.authInstructions.platform.command }}
                     </div>
                   </div>
@@ -1295,7 +1295,7 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">claude</div>
+                <div class="whitespace-nowrap text-gray-100">claude</div>
               </div>
             </div>
 
@@ -1306,10 +1306,10 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 进入你的项目目录</div>
-                <div class="whitespace-nowrap text-gray-800">cd /path/to/your/project</div>
+                <div class="mb-2 text-green-400"># 进入你的项目目录</div>
+                <div class="whitespace-nowrap text-gray-100">cd /path/to/your/project</div>
                 <div class="mb-2 mt-2"># 启动 Claude Code</div>
-                <div class="whitespace-nowrap text-gray-800">claude</div>
+                <div class="whitespace-nowrap text-gray-100">claude</div>
               </div>
             </div>
           </div>
@@ -1432,12 +1432,12 @@
             <div
               class="overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
             >
-              <div class="mb-2"># 添加 NodeSource 仓库</div>
-              <div class="whitespace-nowrap text-gray-800">
+              <div class="mb-2 text-green-400"># 添加 NodeSource 仓库</div>
+              <div class="whitespace-nowrap text-gray-100">
                 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
               </div>
-              <div class="mb-2 mt-3"># 安装 Node.js</div>
-              <div class="whitespace-nowrap text-gray-800">sudo apt-get install -y nodejs</div>
+              <div class="mb-2 mt-3 text-green-400"># 安装 Node.js</div>
+              <div class="whitespace-nowrap text-gray-100">sudo apt-get install -y nodejs</div>
             </div>
           </div>
           <div class="mb-4">
@@ -1448,11 +1448,11 @@
             <div
               class="overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
             >
-              <div class="mb-2"># Ubuntu/Debian</div>
-              <div class="whitespace-nowrap text-gray-800">sudo apt update</div>
-              <div class="whitespace-nowrap text-gray-800">sudo apt install nodejs npm</div>
-              <div class="mb-2 mt-3"># CentOS/RHEL/Fedora</div>
-              <div class="whitespace-nowrap text-gray-800">sudo dnf install nodejs npm</div>
+              <div class="mb-2 text-green-400"># Ubuntu/Debian</div>
+              <div class="whitespace-nowrap text-gray-100">sudo apt update</div>
+              <div class="whitespace-nowrap text-gray-100">sudo apt install nodejs npm</div>
+              <div class="mb-2 mt-3 text-green-400"># CentOS/RHEL/Fedora</div>
+              <div class="whitespace-nowrap text-gray-100">sudo dnf install nodejs npm</div>
             </div>
           </div>
           <div
@@ -1519,7 +1519,7 @@
           <div
             class="mb-4 overflow-x-auto rounded-lg bg-gray-900 border border-gray-700 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
           >
-            <div class="mb-2"># 全局安装 Claude Code</div>
+            <div class="mb-2 text-green-400"># 全局安装 Claude Code</div>
             <div class="whitespace-nowrap text-gray-200">
               npm install -g @anthropic-ai/claude-code
             </div>
@@ -1591,10 +1591,10 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export ANTHROPIC_AUTH_TOKEN="你的API密钥"
                 </div>
               </div>
@@ -1613,26 +1613,26 @@
               <div
                 class="mb-3 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 bash (默认)</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 bash (默认)</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"' >> ~/.bashrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_AUTH_TOKEN="你的API密钥"' >> ~/.bashrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.bashrc</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.bashrc</div>
               </div>
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 zsh</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 zsh</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export ANTHROPIC_AUTH_TOKEN="你的API密钥"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.zshrc</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.zshrc</div>
               </div>
             </div>
           </div>
@@ -1661,13 +1661,13 @@
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export GEMINI_API_KEY="你的API密钥"
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   export GEMINI_MODEL="gemini-2.5-pro"
                 </div>
               </div>
@@ -1688,32 +1688,32 @@
               <div
                 class="mb-3 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 bash (默认)</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 bash (默认)</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"' >> ~/.bashrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_API_KEY="你的API密钥"' >> ~/.bashrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_MODEL="gemini-2.5-pro"' >> ~/.bashrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.bashrc</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.bashrc</div>
               </div>
               <div
                 class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="mb-2"># 对于 zsh</div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="mb-2 text-green-400"># 对于 zsh</div>
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_API_KEY="你的API密钥"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">
+                <div class="whitespace-nowrap text-gray-100">
                   echo 'export GEMINI_MODEL="gemini-2.5-pro"' >> ~/.zshrc
                 </div>
-                <div class="whitespace-nowrap text-gray-800">source ~/.zshrc</div>
+                <div class="whitespace-nowrap text-gray-100">source ~/.zshrc</div>
               </div>
             </div>
 
@@ -1727,9 +1727,9 @@
               <div
                 class="space-y-1 overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
               >
-                <div class="whitespace-nowrap text-gray-800">echo $GOOGLE_GEMINI_BASE_URL</div>
-                <div class="whitespace-nowrap text-gray-800">echo $GEMINI_API_KEY</div>
-                <div class="whitespace-nowrap text-gray-800">echo $GEMINI_MODEL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $GOOGLE_GEMINI_BASE_URL</div>
+                <div class="whitespace-nowrap text-gray-100">echo $GEMINI_API_KEY</div>
+                <div class="whitespace-nowrap text-gray-100">echo $GEMINI_MODEL</div>
               </div>
             </div>
           </div>
@@ -1806,7 +1806,7 @@
                   <div
                     class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
                   >
-                    <div class="whitespace-nowrap text-gray-800">
+                    <div class="whitespace-nowrap text-gray-100">
                       {{ codexConfigContent.authInstructions.platform.command }}
                     </div>
                   </div>
@@ -1938,7 +1938,7 @@
                 <div
                   class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
                 >
-                  <div class="whitespace-nowrap text-gray-800">claude</div>
+                  <div class="whitespace-nowrap text-gray-100">claude</div>
                 </div>
               </div>
 
@@ -1949,10 +1949,10 @@
                 <div
                   class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
                 >
-                  <div class="mb-2"># 进入你的项目目录</div>
-                  <div class="whitespace-nowrap text-gray-800">cd /path/to/your/project</div>
+                  <div class="mb-2 text-green-400"># 进入你的项目目录</div>
+                  <div class="whitespace-nowrap text-gray-100">cd /path/to/your/project</div>
                   <div class="mb-2 mt-2"># 启动 Claude Code</div>
-                  <div class="whitespace-nowrap text-gray-800">claude</div>
+                  <div class="whitespace-nowrap text-gray-100">claude</div>
                 </div>
               </div>
             </div>
@@ -2014,12 +2014,12 @@
                 <div
                   class="overflow-x-auto rounded bg-gray-900 border border-gray-700 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
                 >
-                  <div class="mb-2"># Ubuntu/Debian</div>
-                  <div class="whitespace-nowrap text-gray-800">
+                  <div class="mb-2 text-green-400"># Ubuntu/Debian</div>
+                  <div class="whitespace-nowrap text-gray-100">
                     sudo apt install build-essential
                   </div>
                   <div class="mb-2 mt-2"># CentOS/RHEL</div>
-                  <div class="whitespace-nowrap text-gray-800">
+                  <div class="whitespace-nowrap text-gray-100">
                     sudo dnf groupinstall "Development Tools"
                   </div>
                 </div>
