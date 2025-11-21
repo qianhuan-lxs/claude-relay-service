@@ -1,8 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+  <div class="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-slate-700">
+    <AppNavbar />
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 主内容卡片 -->
-      <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 sm:p-8 shadow-2xl">
+      <div class="bg-slate-700/95 backdrop-blur-sm border border-white/30 rounded-xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
       <div class="mb-4 sm:mb-8">
         <h3
           class="mb-3 flex items-center text-xl font-bold text-white sm:mb-4 sm:text-2xl"
@@ -10,14 +11,14 @@
           <i class="fas fa-graduation-cap mr-2 text-blue-400 sm:mr-3" />
           Claude Code 使用教程
         </h3>
-        <p class="text-sm text-gray-300 sm:text-lg">
+        <p class="text-sm text-gray-200 sm:text-lg">
           跟着这个教程，你可以轻松在自己的电脑上安装并使用 Claude Code。
         </p>
       </div>
 
       <!-- 系统选择标签 -->
       <div class="mb-4 sm:mb-8">
-        <div class="flex flex-wrap gap-1 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-1 sm:gap-2 sm:p-2">
+        <div class="flex flex-wrap gap-1 rounded-xl bg-slate-600/50 backdrop-blur-sm border border-white/20 p-1 sm:gap-2 sm:p-2">
           <button
             v-for="system in tutorialSystems"
             :key="system.key"
@@ -48,7 +49,7 @@
           >
           安装 Node.js 环境
         </h4>
-        <p class="mb-4 text-sm text-gray-300 sm:mb-4 sm:mb-6 sm:text-base">
+        <p class="mb-4 text-sm text-gray-200 sm:mb-4 sm:mb-6 sm:text-base">
           Claude Code 需要 Node.js 环境才能运行。
         </p>
 
@@ -95,7 +96,7 @@
               如果你安装了 Chocolatey 或 Scoop，可以使用命令行安装：
             </p>
             <div
-              class="overflow-x-auto rounded-lg bg-slate-900/90 border border-slate-600/50 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+              class="overflow-x-auto rounded-lg bg-slate-800/90 border border-slate-500/50 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
             >
               <div class="mb-2"># 使用 Chocolatey</div>
               <div class="whitespace-nowrap text-gray-300">choco install nodejs</div>
@@ -128,7 +129,7 @@
             安装完成后，打开 PowerShell 或 CMD，输入以下命令：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">node --version</div>
             <div class="whitespace-nowrap text-gray-300">npm --version</div>
@@ -164,7 +165,7 @@
             打开 PowerShell 或 CMD，运行以下命令：
           </p>
           <div
-            class="mb-4 overflow-x-auto rounded-lg bg-gray-900 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+            class="mb-4 overflow-x-auto rounded-lg bg-slate-800 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
           >
             <div class="mb-2"># 全局安装 Claude Code</div>
             <div class="whitespace-nowrap text-gray-300">
@@ -197,7 +198,7 @@
             安装完成后，输入以下命令检查是否安装成功：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">claude --version</div>
           </div>
@@ -234,7 +235,7 @@
 
           <div class="space-y-4">
             <div
-              class="rounded-lg border border-purple-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-purple-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 方法一：PowerShell 临时设置（当前会话）
@@ -243,7 +244,7 @@
                 在 PowerShell 中运行以下命令：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   $env:ANTHROPIC_BASE_URL = "{{ currentBaseUrl }}"
@@ -258,7 +259,7 @@
             </div>
 
             <div
-              class="rounded-lg border border-purple-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-purple-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 方法二：PowerShell 永久设置（用户级）
@@ -267,7 +268,7 @@
                 在 PowerShell 中运行以下命令设置用户级环境变量：
               </p>
               <div
-                class="mb-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mb-3 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 设置用户级环境变量（永久生效）</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -282,7 +283,7 @@
               </div>
               <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">查看已设置的环境变量：</p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 查看用户级环境变量</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -323,7 +324,7 @@
             </p>
           </div>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">{</div>
             <div class="whitespace-nowrap text-gray-300">"primaryApiKey": "crs"</div>
@@ -346,7 +347,7 @@
                 在 PowerShell 中验证：
               </h6>
               <div
-                class="space-y-1 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="space-y-1 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">echo $env:ANTHROPIC_BASE_URL</div>
                 <div class="whitespace-nowrap text-gray-300">echo $env:ANTHROPIC_AUTH_TOKEN</div>
@@ -358,7 +359,7 @@
                 在 CMD 中验证：
               </h6>
               <div
-                class="space-y-1 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="space-y-1 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">echo %ANTHROPIC_BASE_URL%</div>
                 <div class="whitespace-nowrap text-gray-300">echo %ANTHROPIC_AUTH_TOKEN%</div>
@@ -370,7 +371,7 @@
             <p class="text-sm text-blue-700 dark:text-blue-300">
               <strong>预期输出示例：</strong>
             </p>
-            <div class="rounded bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-2 font-mono text-sm">
+            <div class="rounded bg-slate-700/70 backdrop-blur-sm border border-slate-600/50 p-2 font-mono text-sm">
               <div>{{ currentBaseUrl }}</div>
               <div>cr_xxxxxxxxxxxxxxxxxx</div>
             </div>
@@ -394,7 +395,7 @@
 
           <div class="space-y-4">
             <div
-              class="rounded-lg border border-green-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-green-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 PowerShell 设置方法
@@ -403,7 +404,7 @@
                 在 PowerShell 中运行以下命令：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   $env:GOOGLE_GEMINI_BASE_URL = "{{ geminiBaseUrl }}"
@@ -421,7 +422,7 @@
             </div>
 
             <div
-              class="rounded-lg border border-green-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-green-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 PowerShell 永久设置（用户级）
@@ -430,7 +431,7 @@
                 在 PowerShell 中运行以下命令：
               </p>
               <div
-                class="mb-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mb-3 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 设置用户级环境变量（永久生效）</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -460,7 +461,7 @@
               </h6>
               <p class="mb-3 text-sm text-green-700 dark:text-green-300">在 PowerShell 中验证：</p>
               <div
-                class="space-y-1 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="space-y-1 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">echo $env:GOOGLE_GEMINI_BASE_URL</div>
                 <div class="whitespace-nowrap text-gray-300">echo $env:GEMINI_API_KEY</div>
@@ -495,7 +496,7 @@
                 文件开头添加以下配置：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div
                   v-for="line in codexConfigContent.configToml"
@@ -514,7 +515,7 @@
                 文件中配置API密钥：
               </p>
               <div
-                class="mt-2 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mt-2 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div
                   v-for="line in codexConfigContent.authJson"
@@ -539,7 +540,7 @@
                     {{ codexConfigContent.authInstructions.platform.title }}:
                   </p>
                   <div
-                    class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                    class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                   >
                     <div class="whitespace-nowrap text-gray-300">
                       {{ codexConfigContent.authInstructions.platform.command }}
@@ -556,7 +557,7 @@
                     {{ codexConfigContent.authInstructions.persistent.description }}
                   </p>
                   <div
-                    class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                    class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                   >
                     <div
                       v-for="command in codexConfigContent.authInstructions.persistent.commands"
@@ -600,7 +601,7 @@
             将以下内容追加到配置文件中，并替换示例中的域名和 API 密钥：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div
               v-for="(line, index) in droidCliConfigLines"
@@ -639,7 +640,7 @@
                 启动 Claude Code
               </h6>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">claude</div>
               </div>
@@ -650,7 +651,7 @@
                 在特定项目中使用
               </h6>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 进入你的项目目录</div>
                 <div class="whitespace-nowrap text-gray-300">cd C:\path\to\your\project</div>
@@ -672,7 +673,7 @@
         </h4>
         <div class="space-y-4">
           <details
-            class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+            class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
           >
             <summary
               class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -694,7 +695,7 @@
           </details>
 
           <details
-            class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+            class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
           >
             <summary
               class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -704,7 +705,7 @@
             <div class="px-3 pb-3 text-gray-200 sm:px-4 sm:pb-4">
               <p class="mb-2">如果遇到执行策略限制，运行：</p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -714,7 +715,7 @@
           </details>
 
           <details
-            class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+            class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
           >
             <summary
               class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -757,7 +758,7 @@
         </p>
 
         <div
-          class="mb-4 rounded-xl border border-slate-600/50 bg-slate-700/30 backdrop-blur-sm p-4 sm:mb-6 sm:p-6"
+          class="mb-4 rounded-xl border border-slate-500/50 bg-slate-700/50 backdrop-blur-sm p-4 sm:mb-6 sm:p-6"
         >
           <h5
             class="mb-2 flex items-center text-base font-semibold text-white sm:mb-3 sm:text-lg"
@@ -771,7 +772,7 @@
               如果你已经安装了 Homebrew，使用它安装 Node.js 会更方便：
             </p>
             <div
-              class="overflow-x-auto rounded-lg bg-slate-900/90 border border-slate-600/50 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+              class="overflow-x-auto rounded-lg bg-slate-800/90 border border-slate-500/50 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
             >
               <div class="mb-2"># 更新 Homebrew</div>
               <div class="whitespace-nowrap text-gray-300">brew update</div>
@@ -831,7 +832,7 @@
             安装完成后，打开 Terminal，输入以下命令：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">node --version</div>
             <div class="whitespace-nowrap text-gray-300">npm --version</div>
@@ -867,7 +868,7 @@
             打开 Terminal，运行以下命令：
           </p>
           <div
-            class="mb-4 overflow-x-auto rounded-lg bg-gray-900 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+            class="mb-4 overflow-x-auto rounded-lg bg-slate-800 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
           >
             <div class="mb-2"># 全局安装 Claude Code</div>
             <div class="whitespace-nowrap text-gray-300">
@@ -895,7 +896,7 @@
             安装完成后，输入以下命令检查是否安装成功：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">claude --version</div>
           </div>
@@ -941,7 +942,7 @@
                 在 Terminal 中运行以下命令：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"
@@ -965,7 +966,7 @@
                 编辑你的 shell 配置文件（根据你使用的 shell）：
               </p>
               <div
-                class="mb-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mb-3 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 zsh (默认)</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -977,7 +978,7 @@
                 <div class="whitespace-nowrap text-gray-300">source ~/.zshrc</div>
               </div>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 bash</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1014,7 +1015,7 @@
             </p>
           </div>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">{</div>
             <div class="whitespace-nowrap text-gray-300">"primaryApiKey": "crs"</div>
@@ -1036,7 +1037,7 @@
 
           <div class="space-y-4">
             <div
-              class="rounded-lg border border-green-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-green-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 Terminal 设置方法
@@ -1045,7 +1046,7 @@
                 在 Terminal 中运行以下命令：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"
@@ -1063,7 +1064,7 @@
             </div>
 
             <div
-              class="rounded-lg border border-green-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-green-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 永久设置方法
@@ -1072,7 +1073,7 @@
                 添加到你的 shell 配置文件：
               </p>
               <div
-                class="mb-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mb-3 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 zsh (默认)</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1087,7 +1088,7 @@
                 <div class="whitespace-nowrap text-gray-300">source ~/.zshrc</div>
               </div>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 bash</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1111,7 +1112,7 @@
               </h6>
               <p class="mb-3 text-sm text-green-700 dark:text-green-300">在 Terminal 中验证：</p>
               <div
-                class="space-y-1 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="space-y-1 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">echo $GOOGLE_GEMINI_BASE_URL</div>
                 <div class="whitespace-nowrap text-gray-300">echo $GEMINI_API_KEY</div>
@@ -1146,7 +1147,7 @@
                 文件开头添加以下配置：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div
                   v-for="line in codexConfigContent.configToml"
@@ -1165,7 +1166,7 @@
                 文件中配置API密钥：
               </p>
               <div
-                class="mt-2 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mt-2 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div
                   v-for="line in codexConfigContent.authJson"
@@ -1190,7 +1191,7 @@
                     {{ codexConfigContent.authInstructions.platform.title }}:
                   </p>
                   <div
-                    class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                    class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                   >
                     <div class="whitespace-nowrap text-gray-300">
                       {{ codexConfigContent.authInstructions.platform.command }}
@@ -1207,7 +1208,7 @@
                     {{ codexConfigContent.authInstructions.persistent.description }}
                   </p>
                   <div
-                    class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                    class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                   >
                     <div
                       v-for="command in codexConfigContent.authInstructions.persistent.commands"
@@ -1252,7 +1253,7 @@
             将以下内容追加到配置文件中，并替换示例中的域名和 API 密钥：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div
               v-for="(line, index) in droidCliConfigLines"
@@ -1292,7 +1293,7 @@
                 启动 Claude Code
               </h6>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">claude</div>
               </div>
@@ -1303,7 +1304,7 @@
                 在特定项目中使用
               </h6>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 进入你的项目目录</div>
                 <div class="whitespace-nowrap text-gray-300">cd /path/to/your/project</div>
@@ -1325,7 +1326,7 @@
         </h4>
         <div class="space-y-4">
           <details
-            class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+            class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
           >
             <summary
               class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -1352,7 +1353,7 @@
           </details>
 
           <details
-            class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+            class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
           >
             <summary
               class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -1375,7 +1376,7 @@
           </details>
 
           <details
-            class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+            class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
           >
             <summary
               class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -1429,7 +1430,7 @@
           <div class="mb-4">
             <p class="mb-3 text-gray-700 dark:text-gray-300">方法一：使用官方仓库（推荐）</p>
             <div
-              class="overflow-x-auto rounded-lg bg-slate-900/90 border border-slate-600/50 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+              class="overflow-x-auto rounded-lg bg-slate-800/90 border border-slate-500/50 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
             >
               <div class="mb-2"># 添加 NodeSource 仓库</div>
               <div class="whitespace-nowrap text-gray-300">
@@ -1445,7 +1446,7 @@
               虽然版本可能不是最新的，但对于基本使用已经足够：
             </p>
             <div
-              class="overflow-x-auto rounded-lg bg-slate-900/90 border border-slate-600/50 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+              class="overflow-x-auto rounded-lg bg-slate-800/90 border border-slate-500/50 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
             >
               <div class="mb-2"># Ubuntu/Debian</div>
               <div class="whitespace-nowrap text-gray-300">sudo apt update</div>
@@ -1480,7 +1481,7 @@
             安装完成后，打开终端，输入以下命令：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">node --version</div>
             <div class="whitespace-nowrap text-gray-300">npm --version</div>
@@ -1516,7 +1517,7 @@
             打开终端，运行以下命令：
           </p>
           <div
-            class="mb-4 overflow-x-auto rounded-lg bg-gray-900 p-3 font-mono text-xs text-green-400 sm:p-4 sm:text-sm"
+            class="mb-4 overflow-x-auto rounded-lg bg-slate-800 p-3 font-mono text-xs text-green-300 sm:p-4 sm:text-sm"
           >
             <div class="mb-2"># 全局安装 Claude Code</div>
             <div class="whitespace-nowrap text-gray-300">
@@ -1544,7 +1545,7 @@
             安装完成后，输入以下命令检查是否安装成功：
           </p>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">claude --version</div>
           </div>
@@ -1588,7 +1589,7 @@
               </h6>
               <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">在终端中运行以下命令：</p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   export ANTHROPIC_BASE_URL="{{ currentBaseUrl }}"
@@ -1610,7 +1611,7 @@
               </h6>
               <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">编辑你的 shell 配置文件：</p>
               <div
-                class="mb-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mb-3 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 bash (默认)</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1622,7 +1623,7 @@
                 <div class="whitespace-nowrap text-gray-300">source ~/.bashrc</div>
               </div>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 zsh</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1651,14 +1652,14 @@
 
           <div class="space-y-4">
             <div
-              class="rounded-lg border border-green-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-green-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 终端设置方法
               </h6>
               <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">在终端中运行以下命令：</p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">
                   export GOOGLE_GEMINI_BASE_URL="{{ geminiBaseUrl }}"
@@ -1676,7 +1677,7 @@
             </div>
 
             <div
-              class="rounded-lg border border-green-500/40 bg-white/5 backdrop-blur-sm p-3 sm:p-4"
+              class="rounded-lg border border-green-500/40 bg-slate-600/50 backdrop-blur-sm p-3 sm:p-4"
             >
               <h6 class="mb-2 text-sm font-medium text-gray-800 dark:text-gray-300 sm:text-base">
                 永久设置方法
@@ -1685,7 +1686,7 @@
                 添加到你的 shell 配置文件：
               </p>
               <div
-                class="mb-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mb-3 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 bash (默认)</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1700,7 +1701,7 @@
                 <div class="whitespace-nowrap text-gray-300">source ~/.bashrc</div>
               </div>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="mb-2"># 对于 zsh</div>
                 <div class="whitespace-nowrap text-gray-300">
@@ -1724,7 +1725,7 @@
               </h6>
               <p class="mb-3 text-sm text-green-700 dark:text-green-300">在终端中验证：</p>
               <div
-                class="space-y-1 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="space-y-1 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div class="whitespace-nowrap text-gray-300">echo $GOOGLE_GEMINI_BASE_URL</div>
                 <div class="whitespace-nowrap text-gray-300">echo $GEMINI_API_KEY</div>
@@ -1759,7 +1760,7 @@
                 文件开头添加以下配置：
               </p>
               <div
-                class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div
                   v-for="line in codexConfigContent.configToml"
@@ -1778,7 +1779,7 @@
                 文件中配置API密钥：
               </p>
               <div
-                class="mt-2 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                class="mt-2 overflow-x-auto rounded bg-slate-800 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
               >
                 <div
                   v-for="line in codexConfigContent.authJson"
@@ -1803,7 +1804,7 @@
                     {{ codexConfigContent.authInstructions.platform.title }}:
                   </p>
                   <div
-                    class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                    class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                   >
                     <div class="whitespace-nowrap text-gray-300">
                       {{ codexConfigContent.authInstructions.platform.command }}
@@ -1820,7 +1821,7 @@
                     {{ codexConfigContent.authInstructions.persistent.description }}
                   </p>
                   <div
-                    class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                    class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                   >
                     <div
                       v-for="command in codexConfigContent.authInstructions.persistent.commands"
@@ -1858,7 +1859,7 @@
             </p>
           </div>
           <div
-            class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+            class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
           >
             <div class="whitespace-nowrap text-gray-300">{</div>
             <div class="whitespace-nowrap text-gray-300">"primaryApiKey": "crs"</div>
@@ -1895,7 +1896,7 @@
               将以下内容追加到配置文件中，并替换示例中的域名和 API 密钥：
             </p>
             <div
-              class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+              class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
             >
               <div
                 v-for="(line, index) in droidCliConfigLines"
@@ -1935,7 +1936,7 @@
                   启动 Claude Code
                 </h6>
                 <div
-                  class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                  class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                 >
                   <div class="whitespace-nowrap text-gray-300">claude</div>
                 </div>
@@ -1946,7 +1947,7 @@
                   在特定项目中使用
                 </h6>
                 <div
-                  class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                  class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                 >
                   <div class="mb-2"># 进入你的项目目录</div>
                   <div class="whitespace-nowrap text-gray-300">cd /path/to/your/project</div>
@@ -1968,7 +1969,7 @@
           </h4>
           <div class="space-y-4">
             <details
-              class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+              class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
             >
               <summary
                 class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -2001,7 +2002,7 @@
             </details>
 
             <details
-              class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+              class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
             >
               <summary
                 class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -2011,7 +2012,7 @@
               <div class="px-3 pb-3 text-gray-200 sm:px-4 sm:pb-4">
                 <p class="mb-2">某些 Linux 发行版需要安装额外依赖：</p>
                 <div
-                  class="overflow-x-auto rounded bg-slate-900/90 border border-slate-600/50 p-2 font-mono text-xs text-green-400 sm:p-3 sm:text-sm"
+                  class="overflow-x-auto rounded bg-slate-800/90 border border-slate-500/50 p-2 font-mono text-xs text-green-300 sm:p-3 sm:text-sm"
                 >
                   <div class="mb-2"># Ubuntu/Debian</div>
                   <div class="whitespace-nowrap text-gray-300">
@@ -2026,7 +2027,7 @@
             </details>
 
             <details
-              class="rounded-lg border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+              class="rounded-lg border border-slate-500/50 bg-slate-700/70 backdrop-blur-sm"
             >
               <summary
                 class="cursor-pointer p-3 text-sm font-medium text-white hover:bg-slate-700/50 sm:p-4 sm:text-base"
@@ -2076,6 +2077,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import AppNavbar from '@/components/AppNavbar.vue'
 
 // 当前系统选择
 const activeTutorialSystem = ref('windows')
