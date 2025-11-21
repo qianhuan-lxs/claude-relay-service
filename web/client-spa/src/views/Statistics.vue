@@ -88,12 +88,16 @@
             <div v-else-if="!dailyStats?.length" class="h-full flex items-center justify-center text-gray-500">暂无数据</div>
             <div v-else class="h-full flex flex-col justify-end gap-2">
               <div class="flex items-end gap-2 h-48">
-                <div v-for="(d, idx) in dailyStats" :key="idx" class="flex-1">
-                  <div class="w-full bg-blue-500/30 rounded-t" :style="{ height: barHeight(d.requests) }"></div>
+                <div v-for="(d, idx) in dailyStats" :key="idx" class="flex-1 min-w-0">
+                  <div 
+                    class="w-full bg-blue-500/30 rounded-t transition-all duration-300 hover:bg-blue-500/50" 
+                    :style="{ height: barHeight(d.requests) }"
+                    :title="`${d.date}: ${d.requests} 次请求`"
+                  ></div>
                 </div>
               </div>
-              <div class="grid grid-cols-6 gap-2 text-xs text-gray-500">
-                <div v-for="(d, idx) in tickedDates" :key="idx" class="truncate">{{ d }}</div>
+              <div class="grid gap-2 text-xs text-gray-500" :style="{ gridTemplateColumns: `repeat(${Math.min(tickedDates.length, 6)}, 1fr)` }">
+                <div v-for="(d, idx) in tickedDates" :key="idx" class="truncate text-center">{{ d }}</div>
               </div>
             </div>
           </div>
@@ -216,15 +220,49 @@ const modelStats = computed(() => stats.value?.modelStats || [])
 const apiKeys = computed(() => statistics.apiKeys || [])
 
 function barHeight(value) {
-  const max = Math.max(...dailyStats.value.map((d) => d.requests || 0), 1)
-  const h = Math.round(((value || 0) / max) * 100)
+  if (!dailyStats.value?.length) return '0%'
+  const values = dailyStats.value.map((d) => d.requests || 0)
+  const max = Math.max(...values, 1) // 确保至少为1，避免除以0
+  const h = Math.max(5, Math.round(((value || 0) / max) * 100)) // 最小高度5%，确保可见
   return `${h}%`
 }
 
 const tickedDates = computed(() => {
   if (!dailyStats.value?.length) return []
-  const step = Math.ceil(dailyStats.value.length / 6)
-  return dailyStats.value.map((d) => d.date).filter((_, i) => i % step === 0)
+  const total = dailyStats.value.length
+  // 如果数据点少于6个，显示所有日期；否则显示6个均匀分布的日期
+  const count = Math.min(6, total)
+  const step = total > count ? Math.floor(total / count) : 1
+  const dates = dailyStats.value
+    .map((d) => {
+      // 格式化日期：从 "2025-11-21" 转换为 "11-21"
+      if (d.date) {
+        const parts = d.date.split('-')
+        if (parts.length >= 2) {
+          return `${parts[1]}-${parts[2]}`
+        }
+        return d.date
+      }
+      return d.date
+    })
+    .filter((_, i) => i % step === 0)
+    .slice(0, count)
+  
+  // 确保至少显示第一个和最后一个日期
+  if (dates.length === 0 && dailyStats.value.length > 0) {
+    const first = dailyStats.value[0].date
+    const last = dailyStats.value[dailyStats.value.length - 1].date
+    if (first) {
+      const parts = first.split('-')
+      dates.push(parts.length >= 2 ? `${parts[1]}-${parts[2]}` : first)
+    }
+    if (last && last !== first) {
+      const parts = last.split('-')
+      dates.push(parts.length >= 2 ? `${parts[1]}-${parts[2]}` : last)
+    }
+  }
+  
+  return dates
 })
 
 function modelPercent(m) {
