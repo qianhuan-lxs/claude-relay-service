@@ -39,6 +39,15 @@
           >
             兑换订阅
           </router-link>
+          <router-link
+            to="/docs"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+            :class="isActive('/docs') 
+              ? 'bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'"
+          >
+            使用教程
+          </router-link>
         </nav>
 
         <!-- User Menu -->
@@ -118,6 +127,15 @@
             : 'text-gray-400'"
         >
           兑换订阅
+        </router-link>
+        <router-link
+          to="/docs"
+          class="flex-1 text-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+          :class="isActive('/docs') 
+            ? 'bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white' 
+            : 'text-gray-400'"
+        >
+          使用教程
         </router-link>
       </nav>
     </div>
