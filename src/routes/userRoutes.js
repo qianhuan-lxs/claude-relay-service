@@ -590,6 +590,8 @@ router.get('/:userId', authenticateUserOrAdmin, requireAdmin, async (req, res) =
             createdAt: key.createdAt,
             lastUsedAt: key.lastUsedAt,
             usage: flatUsage,
+            // 管理员可以查看完整的 API Key 值
+            key: key.key || null,
             keyPreview: key.key
               ? `${key.key.substring(0, 8)}...${key.key.substring(key.key.length - 4)}`
               : null
