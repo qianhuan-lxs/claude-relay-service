@@ -299,7 +299,7 @@
                       </div>
                     </th>
                     <th
-                      class="w-[14%] min-w-[120px] cursor-pointer px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600"
+                      class="w-[12%] min-w-[100px] cursor-pointer px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600"
                       @click="sortApiKeys('name')"
                     >
                       名称
@@ -314,7 +314,12 @@
                       <i v-else class="fas fa-sort ml-1 text-gray-400" />
                     </th>
                     <th
-                      class="w-[15%] min-w-[120px] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                      class="w-[18%] min-w-[180px] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
+                    >
+                      API Key
+                    </th>
+                    <th
+                      class="w-[13%] min-w-[100px] px-3 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300"
                     >
                       所属账号
                     </th>
@@ -486,6 +491,27 @@
                             <i class="fas fa-user mr-1" />
                             {{ key.ownerDisplayName }}
                           </div>
+                        </div>
+                      </td>
+                      <!-- API Key 列 -->
+                      <td class="px-3 py-3">
+                        <div class="flex items-center gap-2">
+                          <code
+                            v-if="key.key || key.apiKey"
+                            class="max-w-full truncate rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                            :title="key.key || key.apiKey"
+                          >
+                            {{ key.key || key.apiKey }}
+                          </code>
+                          <span v-else class="text-xs text-gray-400">—</span>
+                          <button
+                            v-if="key.key || key.apiKey"
+                            class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            title="复制 API Key"
+                            @click="copyToClipboard(key.key || key.apiKey)"
+                          >
+                            <i class="fas fa-copy text-xs"></i>
+                          </button>
                         </div>
                       </td>
                       <!-- 所属账号列 -->
@@ -895,7 +921,7 @@
 
                     <!-- 模型统计展开区域 -->
                     <tr v-if="key && key.id && expandedApiKeys[key.id]">
-                      <td class="bg-gray-50 px-3 py-3 dark:bg-gray-700" colspan="13">
+                      <td class="bg-gray-50 px-3 py-3 dark:bg-gray-700" colspan="14">
                         <div v-if="!apiKeyModelStats[key.id]" class="py-4 text-center">
                           <div class="loading-spinner mx-auto" />
                           <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -1199,6 +1225,29 @@
                   />
                   {{ key.isActive ? '活跃' : '已停用' }}
                 </span>
+              </div>
+
+              <!-- API Key 显示 -->
+              <div class="mb-3 flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-700">
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">API Key</p>
+                  <code
+                    v-if="key.key || key.apiKey"
+                    class="block max-w-full truncate rounded bg-white px-2 py-1 text-xs font-mono text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                    :title="key.key || key.apiKey"
+                  >
+                    {{ key.key || key.apiKey }}
+                  </code>
+                  <span v-else class="text-xs text-gray-400">—</span>
+                </div>
+                <button
+                  v-if="key.key || key.apiKey"
+                  class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  title="复制 API Key"
+                  @click="copyToClipboard(key.key || key.apiKey)"
+                >
+                  <i class="fas fa-copy text-sm"></i>
+                </button>
               </div>
 
               <!-- 账户绑定信息 -->
@@ -1903,6 +1952,47 @@
 
         <!-- 兑换码管理 Tab Panel -->
         <div v-else-if="activeTab === 'redeems'" class="tab-panel">
+          <!-- 工具栏区域 -->
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <!-- 左侧：标题 -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">兑换码列表</h3>
+              <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                管理所有兑换码，包括创建、禁用和删除
+              </p>
+            </div>
+
+            <!-- 右侧：操作按钮组 -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+              <!-- 刷新按钮 -->
+              <button
+                class="group relative flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500 sm:w-auto"
+                :disabled="redeemsLoading"
+                @click="loadRedeems()"
+              >
+                <div
+                  class="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-green-500 to-teal-500 opacity-0 blur transition duration-300 group-hover:opacity-20"
+                ></div>
+                <i
+                  :class="[
+                    'fas relative text-green-500',
+                    redeemsLoading ? 'fa-spinner fa-spin' : 'fa-sync-alt'
+                  ]"
+                />
+                <span class="relative">刷新</span>
+              </button>
+
+              <!-- 创建兑换码按钮 -->
+              <button
+                class="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 px-5 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-purple-600 hover:to-purple-700 hover:shadow-lg sm:w-auto"
+                @click.stop="openCreateRedeemModal"
+              >
+                <i class="fas fa-gift"></i>
+                <span>创建兑换码</span>
+              </button>
+            </div>
+          </div>
+
           <div v-if="redeemsLoading" class="py-12 text-center">
             <div class="loading-spinner mx-auto mb-4" />
             <p class="text-gray-500 dark:text-gray-400">正在加载兑换码...</p>
@@ -1916,6 +2006,13 @@
             </div>
             <p class="text-lg text-gray-500 dark:text-gray-400">暂无兑换码</p>
             <p class="mt-2 text-sm text-gray-400">创建的兑换码会出现在这里</p>
+            <button
+              class="mt-4 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-purple-600 hover:to-purple-700 hover:shadow-lg"
+              @click="openCreateRedeemModal"
+            >
+              <i class="fas fa-gift"></i>
+              <span>创建第一个兑换码</span>
+            </button>
           </div>
 
           <!-- 兑换码表格 -->
@@ -4141,6 +4238,35 @@ const isLastUsageDeleted = (apiKey) => {
 const clearSearch = () => {
   searchKeyword.value = ''
   currentPage.value = 1
+}
+
+// 复制到剪贴板
+const copyToClipboard = async (text) => {
+  if (!text) return
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+      showToast('已复制到剪贴板', 'success')
+    } else {
+      // 降级方案
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        showToast('已复制到剪贴板', 'success')
+      } catch (err) {
+        showToast('复制失败，请手动复制', 'error')
+      }
+      document.body.removeChild(textArea)
+    }
+  } catch (err) {
+    console.error('复制失败:', err)
+    showToast('复制失败，请手动复制', 'error')
+  }
 }
 
 // 导出数据到Excel

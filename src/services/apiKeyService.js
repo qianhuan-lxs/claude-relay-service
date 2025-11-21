@@ -692,7 +692,16 @@ class ApiKeyService {
           key.lastUsage = null
         }
 
-        delete key.apiKey // 不返回哈希后的key
+        // 解密原始 API Key（如果存在），供管理员查看
+        let plaintextKey = null
+        if (key.plaintextKeyEnc) {
+          plaintextKey = this._decryptPlaintext(key.plaintextKeyEnc)
+        }
+        // 为管理员返回完整的 API Key 值（如果存在），否则返回预览
+        key.key = plaintextKey || (key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null)
+        key.apiKey = plaintextKey || (key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null) // 兼容字段名
+
+        delete key.plaintextKeyEnc // 不返回加密的原始值
       }
 
       return apiKeys
