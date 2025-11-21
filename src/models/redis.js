@@ -128,7 +128,21 @@ class RedisClient {
     }
 
     await client.hset(key, keyData)
-    await client.expire(key, 86400 * 365) // 1年过期
+    // 设置过期时间为 10 年（315360000 秒），避免数据意外丢失
+    // 注意：这不会影响 API Key 的业务过期时间（expiresAt 字段）
+    await client.expire(key, 86400 * 365 * 10) // 10年过期
+  }
+
+  // 🔄 续期 API Key 的 Redis 过期时间（当 API Key 被使用时调用）
+  async extendApiKeyTTL(keyId) {
+    const key = `apikey:${keyId}`
+    const client = this.getClientSafe()
+    // 检查 key 是否存在
+    const exists = await client.exists(key)
+    if (exists) {
+      // 续期 10 年
+      await client.expire(key, 86400 * 365 * 10)
+    }
   }
 
   async getApiKey(keyId) {

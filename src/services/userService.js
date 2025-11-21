@@ -260,7 +260,7 @@ class UserService {
             // 处理客户端用户：转换为统一格式
             if (key.startsWith('client_user:')) {
               user = {
-                id: user.id,
+                id: String(user.id), // 确保 ID 是字符串类型
                 username: user.username,
                 email: user.email,
                 displayName: user.displayName || user.username,
