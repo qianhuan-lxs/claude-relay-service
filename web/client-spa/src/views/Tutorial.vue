@@ -107,10 +107,10 @@
           <div
             class="rounded-lg border border-blue-400/50 bg-blue-500/20 backdrop-blur-sm p-3 sm:p-4"
           >
-            <h6 class="mb-2 text-sm font-medium text-blue-300 sm:text-base">
+            <h6 class="mb-2 text-sm font-medium text-blue-900 sm:text-base">
               Windows 注意事项
             </h6>
-            <ul class="space-y-1 text-xs text-blue-300 sm:text-sm sm:text-xs">
+            <ul class="space-y-1 text-xs text-blue-800 sm:text-sm sm:text-xs">
               <li>• 建议使用 PowerShell 而不是 CMD</li>
               <li>• 如果遇到权限问题，尝试以管理员身份运行</li>
               <li>• 某些杀毒软件可能会误报，需要添加白名单</li>
@@ -179,10 +179,10 @@
           <div
             class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-500/40 dark:bg-blue-950/30 sm:p-4"
           >
-            <h6 class="mb-2 text-sm font-medium text-blue-300 sm:text-base">
+            <h6 class="mb-2 text-sm font-medium text-blue-900 sm:text-base">
               提示
             </h6>
-            <ul class="space-y-1 text-xs text-blue-300 sm:text-sm">
+            <ul class="space-y-1 text-xs text-blue-800 sm:text-sm">
               <li>• 建议使用 PowerShell 而不是 CMD，功能更强大</li>
               <li>• 如果遇到权限问题，以管理员身份运行 PowerShell</li>
             </ul>
