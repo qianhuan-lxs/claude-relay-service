@@ -10,6 +10,8 @@
     "install:web": "cd web/admin-spa && npm install",
     "deploy": "bash scripts/deploy.sh",
     "deploy:no-build": "bash scripts/deploy.sh --no-build",
+    "deploy:nginx": "bash scripts/deploy.sh --nginx",
+    "deploy:nginx:no-build": "bash scripts/deploy.sh --nginx --no-build",
     "update:pricing": "node scripts/update-model-pricing.js",
     "setup": "node scripts/setup.js",
     "cli": "node cli/index.js",
