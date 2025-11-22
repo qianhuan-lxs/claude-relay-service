@@ -13,6 +13,7 @@
     "deploy:nginx": "bash scripts/deploy.sh --nginx",
     "deploy:nginx:no-build": "bash scripts/deploy.sh --nginx --no-build",
     "check:nginx": "bash scripts/check-nginx.sh",
+    "fix:nginx": "bash scripts/fix-nginx-502.sh",
     "update:pricing": "node scripts/update-model-pricing.js",
     "setup": "node scripts/setup.js",
     "cli": "node cli/index.js",
