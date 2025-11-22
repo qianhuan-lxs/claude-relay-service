@@ -159,28 +159,54 @@ else
 fi
 echo ""
 
-# 8. 检查环境变量
+# 8. 检查环境变量和实际运行配置
 print_info "8. 检查后端服务配置..."
 if [ -f .env ]; then
     print_info "找到 .env 文件"
-    if grep -q "HOST=" .env; then
-        HOST_CONFIG=$(grep "HOST=" .env | cut -d'=' -f2)
+    # 使用 strings 命令处理可能的二进制文件，或直接读取
+    if command -v strings &> /dev/null; then
+        ENV_CONTENT=$(strings .env 2>/dev/null | grep -E "^HOST=|^PORT=" || cat .env 2>/dev/null | grep -E "^HOST=|^PORT=")
+    else
+        ENV_CONTENT=$(cat .env 2>/dev/null | grep -E "^HOST=|^PORT=" || true)
+    fi
+    
+    if echo "$ENV_CONTENT" | grep -q "HOST="; then
+        HOST_CONFIG=$(echo "$ENV_CONTENT" | grep "^HOST=" | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs)
         print_info "HOST 配置: $HOST_CONFIG"
         if [ "$HOST_CONFIG" != "0.0.0.0" ] && [ "$HOST_CONFIG" != "127.0.0.1" ]; then
             print_warning "HOST 配置为 $HOST_CONFIG，可能影响 Nginx 连接"
             print_info "建议设置为 0.0.0.0 或 127.0.0.1"
+        else
+            print_success "HOST 配置正确: $HOST_CONFIG"
         fi
     fi
-    if grep -q "PORT=" .env; then
-        PORT_CONFIG=$(grep "PORT=" .env | cut -d'=' -f2)
+    
+    if echo "$ENV_CONTENT" | grep -q "^PORT="; then
+        PORT_CONFIG=$(echo "$ENV_CONTENT" | grep "^PORT=" | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs)
         print_info "PORT 配置: $PORT_CONFIG"
         if [ "$PORT_CONFIG" != "3000" ]; then
             print_warning "PORT 配置为 $PORT_CONFIG，但 Nginx 配置指向 3000"
             print_info "需要更新 Nginx 配置或环境变量"
+        else
+            print_success "PORT 配置正确: $PORT_CONFIG"
         fi
     fi
 else
     print_info "未找到 .env 文件，使用默认配置"
+fi
+
+# 检查实际运行时的端口（通过进程信息）
+print_info "9. 检查实际运行配置..."
+if [ -n "$(netstat -tlnp 2>/dev/null | grep ':3000 ')" ] || [ -n "$(ss -tlnp 2>/dev/null | grep ':3000 ')" ]; then
+    print_success "服务实际监听在端口 3000"
+else
+    ACTUAL_PORT=$(netstat -tlnp 2>/dev/null | grep "1791747/node" | awk '{print $4}' | cut -d':' -f2 | head -1)
+    if [ -z "$ACTUAL_PORT" ]; then
+        ACTUAL_PORT=$(ss -tlnp 2>/dev/null | grep "1791747/node" | awk '{print $4}' | cut -d':' -f2 | head -1)
+    fi
+    if [ -n "$ACTUAL_PORT" ]; then
+        print_warning "服务实际监听在端口 $ACTUAL_PORT，不是 3000"
+    fi
 fi
 echo ""
 
