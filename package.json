@@ -16,6 +16,7 @@
     "fix:nginx": "bash scripts/fix-nginx-502.sh",
     "fix:nginx:conflict": "bash scripts/fix-nginx-conflict.sh",
     "fix:nginx:complete": "bash scripts/fix-nginx-complete.sh",
+    "open:port:80": "sudo bash scripts/open-port-80.sh",
     "update:pricing": "node scripts/update-model-pricing.js",
     "setup": "node scripts/setup.js",
     "cli": "node cli/index.js",
