@@ -198,7 +198,8 @@ class ApiKeyService {
       createdBy: options.createdBy || 'admin',
       userId: options.userId || '',
       userUsername: options.userUsername || '',
-      icon: icon || '' // 新增：图标（base64编码）
+      icon: icon || '', // 新增：图标（base64编码）
+      orderId: options.orderId || '' // 订单ID（用于倍速计算）
     }
 
     // 保存API Key数据并建立哈希映射
@@ -699,7 +700,8 @@ class ApiKeyService {
         }
         // 为管理员返回完整的 API Key 值（如果存在），否则返回预览
         key.key = plaintextKey || (key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null)
-        key.apiKey = plaintextKey || (key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null) // 兼容字段名
+        key.apiKey =
+          plaintextKey || (key.apiKey ? `${this.prefix}****${key.apiKey.slice(-4)}` : null) // 兼容字段名
 
         delete key.plaintextKeyEnc // 不返回加密的原始值
       }
@@ -1018,9 +1020,35 @@ class ApiKeyService {
 
       // 记录费用统计
       if (costInfo.costs.total > 0) {
-        await redis.incrementDailyCost(keyId, costInfo.costs.total)
+        // 检查是否需要应用倍速（如果 API Key 关联了订单和套餐）
+        let actualCost = costInfo.costs.total
+        let speedMultiplier = 1
+
+        try {
+          const keyData = await redis.getApiKey(keyId)
+          if (keyData && keyData.orderId) {
+            const orderService = require('./orderService')
+            const planService = require('./planService')
+            const order = await orderService.getOrder(keyData.orderId)
+            if (order && order.planId) {
+              const plan = await planService.getPlan(order.planId)
+              if (plan && plan.speedMultiplier) {
+                speedMultiplier = parseFloat(plan.speedMultiplier) || 1
+                actualCost = costInfo.costs.total * speedMultiplier
+                logger.database(
+                  `💰 Applied speed multiplier ${speedMultiplier}x for order ${order.id}, cost: $${costInfo.costs.total.toFixed(6)} -> $${actualCost.toFixed(6)}`
+                )
+              }
+            }
+          }
+        } catch (error) {
+          logger.warn(`⚠️ Failed to apply speed multiplier for ${keyId}:`, error)
+          // 继续使用原始费用，不中断流程
+        }
+
+        await redis.incrementDailyCost(keyId, actualCost)
         logger.database(
-          `💰 Recorded cost for ${keyId}: $${costInfo.costs.total.toFixed(6)}, model: ${model}`
+          `💰 Recorded cost for ${keyId}: $${actualCost.toFixed(6)} (original: $${costInfo.costs.total.toFixed(6)}, multiplier: ${speedMultiplier}x), model: ${model}`
         )
       } else {
         logger.debug(`💰 No cost recorded for ${keyId} - zero cost for model: ${model}`)
@@ -1208,12 +1236,38 @@ class ApiKeyService {
 
       // 记录费用统计
       if (costInfo.totalCost > 0) {
-        await redis.incrementDailyCost(keyId, costInfo.totalCost)
+        // 检查是否需要应用倍速（如果 API Key 关联了订单和套餐）
+        let actualCost = costInfo.totalCost
+        let speedMultiplier = 1
+
+        try {
+          const keyData = await redis.getApiKey(keyId)
+          if (keyData && keyData.orderId) {
+            const orderService = require('./orderService')
+            const planService = require('./planService')
+            const order = await orderService.getOrder(keyData.orderId)
+            if (order && order.planId) {
+              const plan = await planService.getPlan(order.planId)
+              if (plan && plan.speedMultiplier) {
+                speedMultiplier = parseFloat(plan.speedMultiplier) || 1
+                actualCost = costInfo.totalCost * speedMultiplier
+                logger.database(
+                  `💰 Applied speed multiplier ${speedMultiplier}x for order ${order.id}, cost: $${costInfo.totalCost.toFixed(6)} -> $${actualCost.toFixed(6)}`
+                )
+              }
+            }
+          }
+        } catch (error) {
+          logger.warn(`⚠️ Failed to apply speed multiplier for ${keyId}:`, error)
+          // 继续使用原始费用，不中断流程
+        }
+
+        await redis.incrementDailyCost(keyId, actualCost)
         logger.database(
-          `💰 Recorded cost for ${keyId}: $${costInfo.totalCost.toFixed(6)}, model: ${model}`
+          `💰 Recorded cost for ${keyId}: $${actualCost.toFixed(6)} (original: $${costInfo.totalCost.toFixed(6)}, multiplier: ${speedMultiplier}x), model: ${model}`
         )
 
-        // 记录 Opus 周费用（如果适用）
+        // 记录 Opus 周费用（如果适用）- 使用原始费用，不应用倍速
         await this.recordOpusCost(keyId, costInfo.totalCost, model, accountType)
 
         // 记录详细的缓存费用（如果有）
@@ -1540,23 +1594,21 @@ class ApiKeyService {
       const allKeys = await redis.getAllApiKeys()
       // 确保 userId 类型匹配（Redis 中所有字段都是字符串）
       const userIdStr = String(userId)
-      
+
       // 调试：检查所有 API Keys 的 userId 字段
-      const userIdsInKeys = allKeys.map(key => ({
+      const userIdsInKeys = allKeys.map((key) => ({
         id: key.id,
         name: key.name,
         userId: key.userId,
         userIdType: typeof key.userId,
         userIdValue: String(key.userId || '')
       }))
-      
+
       logger.debug(
         `🔍 getUserApiKeys: userId=${userIdStr} (type: ${typeof userId}), totalKeys=${allKeys.length}`
       )
-      logger.debug(
-        `🔍 Sample userIds in keys: ${JSON.stringify(userIdsInKeys.slice(0, 5))}`
-      )
-      
+      logger.debug(`🔍 Sample userIds in keys: ${JSON.stringify(userIdsInKeys.slice(0, 5))}`)
+
       let userKeys = allKeys.filter((key) => {
         // 严格匹配 userId（确保类型一致）
         const keyUserId = String(key.userId || '')
@@ -1566,7 +1618,7 @@ class ApiKeyService {
         }
         return matches
       })
-      
+
       logger.debug(
         `🔍 getUserApiKeys: userId=${userIdStr}, totalKeys=${allKeys.length}, userKeys=${userKeys.length}`
       )
@@ -1772,7 +1824,7 @@ class ApiKeyService {
       // 计算日期范围
       const today = new Date()
       let startDate = new Date(today)
-      let dateRange = []
+      const dateRange = []
 
       if (period === 'week') {
         startDate.setDate(today.getDate() - 6) // 最近7天（包括今天）
@@ -1808,7 +1860,7 @@ class ApiKeyService {
             // 查找所有该 key 的 daily 统计键
             const dailyKeysPattern = `usage:daily:${keyId}:*`
             const allDailyKeys = await client.keys(dailyKeysPattern)
-            
+
             // 从键中提取日期并添加到 dateRange（如果还没有）
             const existingDates = new Set(dateRange)
             for (const key of allDailyKeys) {
@@ -1821,11 +1873,11 @@ class ApiKeyService {
                 }
               }
             }
-            
+
             // 对日期进行排序
             dateRange.sort((a, b) => a.localeCompare(b))
           }
-          
+
           // 获取指定日期范围的daily统计
           for (const dateStr of dateRange) {
             const dailyKey = `usage:daily:${keyId}:${dateStr}`
@@ -1867,11 +1919,15 @@ class ApiKeyService {
               for (const modelKey of modelKeys) {
                 // 解析模型名称：usage:{keyId}:model:daily:{model}:{date}
                 const match = modelKey.match(/usage:[^:]+:model:daily:(.+):(\d{4}-\d{2}-\d{2})/)
-                if (!match) continue
+                if (!match) {
+                  continue
+                }
 
                 const [, modelName, keyDate] = match
                 // 如果指定了filterModel，只统计该模型
-                if (filterModel && modelName !== filterModel) continue
+                if (filterModel && modelName !== filterModel) {
+                  continue
+                }
 
                 const modelData = await client.hgetall(modelKey)
                 if (modelData && Object.keys(modelData).length > 0) {
@@ -1883,9 +1939,7 @@ class ApiKeyService {
                     cost: 0
                   }
 
-                  existing.requests += parseInt(
-                    modelData.requests || modelData.totalRequests || 0
-                  )
+                  existing.requests += parseInt(modelData.requests || modelData.totalRequests || 0)
                   existing.inputTokens += parseInt(
                     modelData.inputTokens || modelData.totalInputTokens || 0
                   )
@@ -1894,7 +1948,9 @@ class ApiKeyService {
                   )
 
                   // 计算模型当日费用（需要根据tokens计算）
-                  const inputTokens = parseInt(modelData.inputTokens || modelData.totalInputTokens || 0)
+                  const inputTokens = parseInt(
+                    modelData.inputTokens || modelData.totalInputTokens || 0
+                  )
                   const outputTokens = parseInt(
                     modelData.outputTokens || modelData.totalOutputTokens || 0
                   )
@@ -1904,10 +1960,12 @@ class ApiKeyService {
                       const usage = {
                         input_tokens: inputTokens,
                         output_tokens: outputTokens,
-                        cache_creation_input_tokens:
-                          parseInt(modelData.cacheCreateTokens || modelData.totalCacheCreateTokens || 0),
-                        cache_read_input_tokens:
-                          parseInt(modelData.cacheReadTokens || modelData.totalCacheReadTokens || 0)
+                        cache_creation_input_tokens: parseInt(
+                          modelData.cacheCreateTokens || modelData.totalCacheCreateTokens || 0
+                        ),
+                        cache_read_input_tokens: parseInt(
+                          modelData.cacheReadTokens || modelData.totalCacheReadTokens || 0
+                        )
                       }
                       const costResult = CostCalculator.calculateCost(usage, modelName)
                       existing.cost += costResult.costs.total
@@ -1927,14 +1985,20 @@ class ApiKeyService {
 
             for (const modelKey of allModelKeys) {
               const match = modelKey.match(/usage:[^:]+:model:daily:(.+):(\d{4}-\d{2}-\d{2})/)
-              if (!match) continue
+              if (!match) {
+                continue
+              }
 
               const [, modelName, keyDate] = match
               // 检查日期是否在范围内
-              const keyDateObj = new Date(keyDate + 'T00:00:00')
-              if (keyDateObj < startDate) continue
+              const keyDateObj = new Date(`${keyDate}T00:00:00`)
+              if (keyDateObj < startDate) {
+                continue
+              }
 
-              if (filterModel && modelName !== filterModel) continue
+              if (filterModel && modelName !== filterModel) {
+                continue
+              }
 
               const modelData = await client.hgetall(modelKey)
               if (modelData && Object.keys(modelData).length > 0) {
@@ -1946,9 +2010,7 @@ class ApiKeyService {
                   cost: 0
                 }
 
-                existing.requests += parseInt(
-                  modelData.requests || modelData.totalRequests || 0
-                )
+                existing.requests += parseInt(modelData.requests || modelData.totalRequests || 0)
                 existing.inputTokens += parseInt(
                   modelData.inputTokens || modelData.totalInputTokens || 0
                 )
@@ -1957,7 +2019,9 @@ class ApiKeyService {
                 )
 
                 // 计算模型费用
-                const inputTokens = parseInt(modelData.inputTokens || modelData.totalInputTokens || 0)
+                const inputTokens = parseInt(
+                  modelData.inputTokens || modelData.totalInputTokens || 0
+                )
                 const outputTokens = parseInt(
                   modelData.outputTokens || modelData.totalOutputTokens || 0
                 )
@@ -1967,10 +2031,12 @@ class ApiKeyService {
                     const usage = {
                       input_tokens: inputTokens,
                       output_tokens: outputTokens,
-                      cache_creation_input_tokens:
-                        parseInt(modelData.cacheCreateTokens || modelData.totalCacheCreateTokens || 0),
-                      cache_read_input_tokens:
-                        parseInt(modelData.cacheReadTokens || modelData.totalCacheReadTokens || 0)
+                      cache_creation_input_tokens: parseInt(
+                        modelData.cacheCreateTokens || modelData.totalCacheCreateTokens || 0
+                      ),
+                      cache_read_input_tokens: parseInt(
+                        modelData.cacheReadTokens || modelData.totalCacheReadTokens || 0
+                      )
                     }
                     const costResult = CostCalculator.calculateCost(usage, modelName)
                     existing.cost += costResult.costs.total
@@ -1993,7 +2059,7 @@ class ApiKeyService {
             stats.totalOutputTokens += dailyStat.outputTokens
             stats.totalCost += dailyStat.cost
           }
-          
+
           // 对于 'all'，如果 dailyStats 为空或数据不完整，尝试使用总统计数据作为补充
           if (period === 'all' && dailyStatsMap.size === 0) {
             const keyStats = await redis.getUsageStats(keyId)
