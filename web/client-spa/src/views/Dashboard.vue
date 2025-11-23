@@ -92,6 +92,54 @@
         </div>
       </div>
 
+      <!-- My Plans Section -->
+      <div v-if="activatedPlans.length > 0" class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-semibold text-white">我的套餐</h2>
+          <router-link
+            to="/plans"
+            class="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+          >
+            查看全部
+            <i class="fas fa-arrow-right text-xs"></i>
+          </router-link>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="order in activatedPlans"
+            :key="order.id"
+            class="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 hover:border-blue-500/30 transition-all duration-200"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-lg font-semibold text-white">{{ order.planName }}</h3>
+              <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                已激活
+              </span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between text-gray-400">
+                <span>订单ID</span>
+                <span class="text-gray-300 font-mono text-xs">{{ order.id.substring(0, 8) }}...</span>
+              </div>
+              <div class="flex justify-between text-gray-400">
+                <span>激活时间</span>
+                <span class="text-gray-300">{{ formatDate(order.activatedAt) }}</span>
+              </div>
+              <div v-if="order.expiresAt" class="flex justify-between text-gray-400">
+                <span>过期时间</span>
+                <span class="text-gray-300">{{ formatDate(order.expiresAt) }}</span>
+              </div>
+            </div>
+            <div v-if="order.apiKeyId" class="mt-3 pt-3 border-t border-white/10">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-400">API Key</span>
+                <span class="text-gray-300 font-mono">{{ order.apiKeyId.substring(0, 8) }}...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Main Content Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <!-- System Announcements -->
@@ -161,6 +209,22 @@
               </span>
             </div>
             <div class="space-y-1 text-xs text-gray-400">
+              <div class="flex justify-between items-center">
+                <span>API Key</span>
+                <div class="flex items-center gap-1">
+                  <code class="text-xs text-gray-300 font-mono bg-white/5 px-1.5 py-0.5 rounded max-w-[120px] truncate">{{ key.key ? key.key.substring(0, 20) + '...' : 'N/A' }}</code>
+                  <button
+                    v-if="key.key"
+                    @click.stop="copyApiKey(key.key)"
+                    class="text-blue-400 hover:text-blue-300 transition-colors"
+                    title="复制完整 API Key"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
               <div class="flex justify-between">
                 <span>请求数</span>
                 <span class="text-gray-300">{{ key.usage?.requests || 0 }}</span>
@@ -203,12 +267,15 @@
 import { computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useStatisticsStore } from '@/stores/statistics'
+import { usePlansStore } from '@/stores/plans'
+import { showToast } from '@/utils/toast'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AnnouncementList from '@/components/AnnouncementList.vue'
 import TutorialList from '@/components/TutorialList.vue'
 
 const authStore = useAuthStore()
 const statistics = useStatisticsStore()
+const plansStore = usePlansStore()
 
 const displayName = computed(() => {
   return authStore.user?.username || '用户'
@@ -239,6 +306,10 @@ const recentApiKeys = computed(() => {
       return bTime - aTime
     })
     .slice(0, 3)
+})
+
+const activatedPlans = computed(() => {
+  return plansStore.getActivatedPlans()
 })
 
 const quickStats = computed(() => {
@@ -284,11 +355,28 @@ function formatDate(value) {
   }
 }
 
-onMounted(() => {
+async function copyApiKey(key) {
+  try {
+    await navigator.clipboard.writeText(key)
+    showToast('API Key 已复制到剪贴板', 'success')
+  } catch (error) {
+    console.error('复制失败:', error)
+    showToast('复制失败，请手动复制', 'error')
+  }
+}
+
+onMounted(async () => {
   // 加载本周统计数据
-  statistics.fetchUsageStats('week')
+  await statistics.fetchUsageStats('week')
   // 加载 API Keys
-  statistics.fetchUserApiKeys(false)
+  await statistics.fetchUserApiKeys(false)
+  // 加载用户订单
+  try {
+    await plansStore.fetchUserOrders()
+  } catch (error) {
+    // 静默处理错误，不影响其他数据加载
+    console.error('Failed to fetch user orders:', error)
+  }
 })
 </script>
 

@@ -211,6 +211,7 @@
             <thead>
               <tr class="border-b border-white/10">
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">名称</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">API Key</th>
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">创建时间</th>
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">请求数</th>
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Tokens</th>
@@ -220,10 +221,25 @@
             </thead>
             <tbody>
               <tr v-if="!apiKeys.length">
-                <td colspan="6" class="py-8 text-center text-gray-500">暂无 API Keys</td>
+                <td colspan="7" class="py-8 text-center text-gray-500">暂无 API Keys</td>
               </tr>
               <tr v-for="k in apiKeys" :key="k.id" class="border-b border-white/5">
                 <td class="py-3 px-4 text-gray-200">{{ k.name || k.keyPreview || k.id }}</td>
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2">
+                    <code class="text-xs text-gray-300 font-mono bg-white/5 px-2 py-1 rounded">{{ k.key || 'N/A' }}</code>
+                    <button
+                      v-if="k.key"
+                      @click="copyApiKey(k.key)"
+                      class="text-blue-400 hover:text-blue-300 transition-colors"
+                      title="复制 API Key"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
                 <td class="py-3 px-4 text-gray-400 text-sm">{{ formatDate(k.createdAt) }}</td>
                 <td class="py-3 px-4 text-gray-300">{{ k.usage?.requests || 0 }}</td>
                 <td class="py-3 px-4 text-gray-300">{{ (k.usage?.inputTokens || 0) + (k.usage?.outputTokens || 0) }}</td>
@@ -254,6 +270,7 @@
 import { computed, onMounted, ref, watch, nextTick } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import { useStatisticsStore } from '@/stores/statistics'
+import { showToast } from '@/utils/toast'
 
 const statistics = useStatisticsStore()
 const loading = computed(() => statistics.loading)
@@ -371,6 +388,16 @@ function formatDate(value) {
     return new Date(value).toLocaleString()
   } catch (_) {
     return String(value)
+  }
+}
+
+async function copyApiKey(key) {
+  try {
+    await navigator.clipboard.writeText(key)
+    showToast('API Key 已复制到剪贴板', 'success')
+  } catch (error) {
+    console.error('复制失败:', error)
+    showToast('复制失败，请手动复制', 'error')
   }
 }
 </script>

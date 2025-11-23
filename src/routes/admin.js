@@ -9318,16 +9318,24 @@ router.put('/announcements/:id', authenticateAdmin, async (req, res) => {
     const { title, content, type, isPinned, isActive } = req.body
 
     const updates = {}
-    if (title !== undefined && title !== null && title !== '') updates.title = title
-    if (content !== undefined && content !== null && content !== '') updates.content = content
+    if (title !== undefined && title !== null && title !== '') {
+      updates.title = title
+    }
+    if (content !== undefined && content !== null && content !== '') {
+      updates.content = content
+    }
     if (type !== undefined && type !== null && type !== '') {
       if (type !== 'important' && type !== 'normal') {
         return res.status(400).json({ error: 'Type must be "important" or "normal"' })
       }
       updates.type = type
     }
-    if (isPinned !== undefined) updates.isPinned = isPinned
-    if (isActive !== undefined) updates.isActive = isActive
+    if (isPinned !== undefined) {
+      updates.isPinned = isPinned
+    }
+    if (isActive !== undefined) {
+      updates.isActive = isActive
+    }
 
     const announcement = await redis.updateAnnouncement(id, updates)
 
@@ -9423,16 +9431,24 @@ router.put('/tutorials/:id', authenticateAdmin, async (req, res) => {
     const { title, content, category, sortOrder, isActive } = req.body
 
     const updates = {}
-    if (title !== undefined) updates.title = title
-    if (content !== undefined) updates.content = content
-    if (category !== undefined) updates.category = category
+    if (title !== undefined) {
+      updates.title = title
+    }
+    if (content !== undefined) {
+      updates.content = content
+    }
+    if (category !== undefined) {
+      updates.category = category
+    }
     if (sortOrder !== undefined) {
       if (typeof sortOrder !== 'number') {
         return res.status(400).json({ error: 'sortOrder must be a number' })
       }
       updates.sortOrder = sortOrder
     }
-    if (isActive !== undefined) updates.isActive = isActive
+    if (isActive !== undefined) {
+      updates.isActive = isActive
+    }
 
     const tutorial = await redis.updateTutorial(id, updates)
 

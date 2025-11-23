@@ -40,6 +40,8 @@ const tabRouteMap = computed(() => {
     userManagement: '/user-management',
     announcementManagement: '/announcement-management',
     tutorialManagement: '/tutorial-management',
+    planManagement: '/plan-management',
+    orderManagement: '/order-management',
     tutorial: '/tutorial',
     settings: '/settings'
   }
@@ -65,6 +67,8 @@ const initActiveTab = () => {
       Accounts: 'accounts',
       AnnouncementManagement: 'announcementManagement',
       TutorialManagement: 'tutorialManagement',
+      PlanManagement: 'planManagement',
+      OrderManagement: 'orderManagement',
       Tutorial: 'tutorial',
       Settings: 'settings'
     }
@@ -96,6 +100,8 @@ watch(
         Accounts: 'accounts',
         AnnouncementManagement: 'announcementManagement',
         TutorialManagement: 'tutorialManagement',
+        PlanManagement: 'planManagement',
+        OrderManagement: 'orderManagement',
         Tutorial: 'tutorial',
         Settings: 'settings'
       }

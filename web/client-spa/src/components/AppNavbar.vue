@@ -31,6 +31,18 @@
             使用统计
           </router-link>
           <router-link
+            to="/plans"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative"
+            :class="isActive('/plans') 
+              ? 'bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'"
+          >
+            <span class="relative">
+              限时优惠
+              <span v-if="!isActive('/plans')" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            </span>
+          </router-link>
+          <router-link
             to="/redeem"
             class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
             :class="isActive('/redeem') 

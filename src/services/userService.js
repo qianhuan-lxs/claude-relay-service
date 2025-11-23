@@ -104,6 +104,62 @@ class UserService {
     }
   }
 
+  // 👤 通过邮箱获取用户
+  async getUserByEmail(email) {
+    try {
+      const client = redis.getClientSafe()
+      
+      // 查找所有用户
+      const ldapKeys = await client.keys(`${this.userPrefix}*`)
+      const clientKeys = await client.keys(`client_user:*`)
+      const allKeys = [...ldapKeys, ...clientKeys]
+
+      for (const key of allKeys) {
+        try {
+          const type = await client.type(key)
+          if (type !== 'string') {
+            continue
+          }
+
+          const userData = await client.get(key)
+          if (userData) {
+            let user = JSON.parse(userData)
+            
+            // 检查邮箱是否匹配（不区分大小写）
+            if (user.email && user.email.toLowerCase() === email.toLowerCase()) {
+              // 处理客户端用户：转换为统一格式
+              if (key.startsWith('client_user:')) {
+                user = {
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  displayName: user.displayName || user.username,
+                  firstName: user.firstName || '',
+                  lastName: user.lastName || '',
+                  role: user.role || 'user',
+                  isActive: user.isActive !== false,
+                  createdAt: user.createdAt,
+                  updatedAt: user.updatedAt || user.createdAt,
+                  lastLoginAt: user.lastLoginAt || null
+                }
+              }
+              
+              return user
+            }
+          }
+        } catch (error) {
+          // 忽略单个用户的解析错误，继续查找
+          continue
+        }
+      }
+
+      return null
+    } catch (error) {
+      logger.error('❌ Error getting user by email:', error)
+      throw error
+    }
+  }
+
   // 👤 通过ID获取用户
   async getUserById(userId, calculateUsage = true) {
     try {
@@ -652,7 +708,8 @@ class UserService {
             stats.totalUsage.inputTokens += apiKey.usage.total.inputTokens || 0
             stats.totalUsage.outputTokens += apiKey.usage.total.outputTokens || 0
             // 使用 totalCost 字段（与 /admin/dashboard 保持一致）
-            stats.totalUsage.totalCost += apiKey.totalCost || apiKey.usage.total.cost || apiKey.usage.total.totalCost || 0
+            stats.totalUsage.totalCost +=
+              apiKey.totalCost || apiKey.usage.total.cost || apiKey.usage.total.totalCost || 0
           }
         }
 
@@ -665,7 +722,9 @@ class UserService {
         for (const key of allKeys) {
           try {
             const type = await client.type(key)
-            if (type !== 'string') continue
+            if (type !== 'string') {
+              continue
+            }
 
             const userData = await client.get(key)
             if (userData) {
