@@ -657,7 +657,9 @@
 
               <!-- 数据统计预览 -->
               <div v-if="exportPreview" class="mb-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-700/50">
-                <h3 class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">可导出数据统计</h3>
+                <h3 class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  可导出数据统计
+                </h3>
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div v-if="exportPreview.apikeys !== undefined" class="text-center">
                     <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -718,9 +720,9 @@
                     >
                       <input
                         v-model="selectedExportTypes"
-                        :value="type.value"
                         class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         type="checkbox"
+                        :value="type.value"
                       />
                       <span class="text-sm text-gray-700 dark:text-gray-300">{{ type.label }}</span>
                     </label>
@@ -742,7 +744,9 @@
                       class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       type="checkbox"
                     />
-                    <span class="text-sm text-gray-700 dark:text-gray-300">解密敏感数据（用于迁移）</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                      解密敏感数据（用于迁移）
+                    </span>
                   </label>
                 </div>
               </div>
@@ -818,8 +822,23 @@
               </button>
 
               <!-- 导入结果 -->
-              <div v-if="importResult" class="mt-4 rounded-lg p-4" :class="importResult.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'">
-                <h3 class="mb-2 text-sm font-semibold" :class="importResult.success ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'">
+              <div
+                v-if="importResult"
+                class="mt-4 rounded-lg p-4"
+                :class="
+                  importResult.success
+                    ? 'bg-green-50 dark:bg-green-900/20'
+                    : 'bg-red-50 dark:bg-red-900/20'
+                "
+              >
+                <h3
+                  class="mb-2 text-sm font-semibold"
+                  :class="
+                    importResult.success
+                      ? 'text-green-800 dark:text-green-300'
+                      : 'text-red-800 dark:text-red-300'
+                  "
+                >
                   {{ importResult.success ? '导入成功' : '导入失败' }}
                 </h3>
                 <div v-if="importResult.stats" class="text-sm text-gray-700 dark:text-gray-300">
@@ -1635,7 +1654,7 @@ const formatFileSize = (bytes) => {
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
 }
 
 // 处理导入
@@ -1679,7 +1698,7 @@ const handleImport = async () => {
         message: data.message
       }
       showToast('数据导入成功', 'success')
-      
+
       // 重新加载预览
       await loadExportPreview()
     } else {
