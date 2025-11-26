@@ -155,37 +155,47 @@ configure_nginx() {
     fi
     
     # 禁用默认配置（避免显示默认页面）
-    print_info "禁用 Nginx 默认配置..."
+    print_info "禁用 Nginx 默认配置和冲突配置..."
     if [ "$OS" = "centos" ]; then
+        # 禁用默认配置
         if [ -f /etc/nginx/conf.d/default.conf ]; then
             sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled 2>/dev/null || true
             print_success "已禁用默认配置"
         fi
         
-        # 禁用其他使用 server_name "_" 的配置
+        # 禁用所有使用 server_name "_" 的配置（除了我们要创建的）
         for file in /etc/nginx/conf.d/*.conf; do
             if [ -f "$file" ] && [ "$file" != "$NGINX_CONF_FILE" ]; then
-                if grep -q 'server_name\s\+_;' "$file" 2>/dev/null; then
+                if grep -qE 'server_name\s+[_;]' "$file" 2>/dev/null; then
                     sudo mv "$file" "${file}.disabled" 2>/dev/null || true
                     print_info "已禁用冲突配置: $file"
                 fi
             fi
         done
     else
-        if [ -f /etc/nginx/sites-enabled/default ]; then
+        # 禁用默认配置（删除符号链接）
+        if [ -f /etc/nginx/sites-enabled/default ] || [ -L /etc/nginx/sites-enabled/default ]; then
             sudo rm -f /etc/nginx/sites-enabled/default
             print_success "已禁用默认配置"
         fi
         
-        # 禁用其他使用 server_name "_" 的配置
+        # 禁用所有使用 server_name "_" 的配置（除了我们要创建的）
         for file in /etc/nginx/sites-enabled/*; do
             if [ -f "$file" ] && [ "$file" != "/etc/nginx/sites-enabled/claude-relay-service" ]; then
-                if grep -q 'server_name\s\+_;' "$file" 2>/dev/null; then
+                if grep -qE 'server_name\s+[_;]' "$file" 2>/dev/null; then
                     sudo rm -f "$file"
                     print_info "已禁用冲突配置: $file"
                 fi
             fi
         done
+        
+        # 也检查 sites-available 目录，禁用默认配置的源文件
+        if [ -f /etc/nginx/sites-available/default ]; then
+            # 不删除源文件，只确保它没有被启用
+            if [ -L /etc/nginx/sites-enabled/default ]; then
+                sudo rm -f /etc/nginx/sites-enabled/default
+            fi
+        fi
     fi
     
     # 复制配置文件
@@ -215,8 +225,36 @@ configure_nginx() {
         fi
     fi
     
+    # 再次检查是否还有冲突配置
+    print_info "再次检查冲突配置..."
+    if [ "$OS" = "debian" ]; then
+        REMAINING_CONFLICTS=$(find /etc/nginx/sites-enabled -type f -name "*" ! -name "claude-relay-service" 2>/dev/null | xargs grep -l 'server_name\s\+[_;]' 2>/dev/null | wc -l)
+        if [ "$REMAINING_CONFLICTS" -gt 0 ]; then
+            print_warning "发现仍有冲突配置，正在清理..."
+            find /etc/nginx/sites-enabled -type f -name "*" ! -name "claude-relay-service" 2>/dev/null | xargs grep -l 'server_name\s\+[_;]' 2>/dev/null | while read -r file; do
+                sudo rm -f "$file"
+                print_info "已删除冲突配置: $file"
+            done
+        fi
+    else
+        REMAINING_CONFLICTS=$(find /etc/nginx/conf.d -name "*.conf" ! -name "claude-relay-service.conf" 2>/dev/null | xargs grep -l 'server_name\s\+[_;]' 2>/dev/null | wc -l)
+        if [ "$REMAINING_CONFLICTS" -gt 0 ]; then
+            print_warning "发现仍有冲突配置，正在清理..."
+            find /etc/nginx/conf.d -name "*.conf" ! -name "claude-relay-service.conf" 2>/dev/null | xargs grep -l 'server_name\s\+[_;]' 2>/dev/null | while read -r file; do
+                sudo mv "$file" "${file}.disabled" 2>/dev/null || true
+                print_info "已禁用冲突配置: $file"
+            done
+        fi
+    fi
+    
     # 测试配置
     print_info "测试 Nginx 配置..."
+    if sudo nginx -t 2>&1 | grep -q "conflicting server name"; then
+        print_error "检测到 server_name 冲突，请运行: npm run fix:nginx:conflict"
+        print_info "或手动禁用冲突的配置文件"
+        return 1
+    fi
+    
     if sudo nginx -t; then
         print_success "Nginx 配置测试通过"
     else
