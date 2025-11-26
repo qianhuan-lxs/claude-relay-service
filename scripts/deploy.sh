@@ -154,6 +154,40 @@ configure_nginx() {
         NGINX_DOMAIN="_"
     fi
     
+    # 禁用默认配置（避免显示默认页面）
+    print_info "禁用 Nginx 默认配置..."
+    if [ "$OS" = "centos" ]; then
+        if [ -f /etc/nginx/conf.d/default.conf ]; then
+            sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled 2>/dev/null || true
+            print_success "已禁用默认配置"
+        fi
+        
+        # 禁用其他使用 server_name "_" 的配置
+        for file in /etc/nginx/conf.d/*.conf; do
+            if [ -f "$file" ] && [ "$file" != "$NGINX_CONF_FILE" ]; then
+                if grep -q 'server_name\s\+_;' "$file" 2>/dev/null; then
+                    sudo mv "$file" "${file}.disabled" 2>/dev/null || true
+                    print_info "已禁用冲突配置: $file"
+                fi
+            fi
+        done
+    else
+        if [ -f /etc/nginx/sites-enabled/default ]; then
+            sudo rm -f /etc/nginx/sites-enabled/default
+            print_success "已禁用默认配置"
+        fi
+        
+        # 禁用其他使用 server_name "_" 的配置
+        for file in /etc/nginx/sites-enabled/*; do
+            if [ -f "$file" ] && [ "$file" != "/etc/nginx/sites-enabled/claude-relay-service" ]; then
+                if grep -q 'server_name\s\+_;' "$file" 2>/dev/null; then
+                    sudo rm -f "$file"
+                    print_info "已禁用冲突配置: $file"
+                fi
+            fi
+        done
+    fi
+    
     # 复制配置文件
     if [ "$OS" = "centos" ]; then
         print_info "复制配置文件到 $NGINX_CONF_FILE"
