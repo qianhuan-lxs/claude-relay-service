@@ -63,6 +63,11 @@
                     <th
                       class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                     >
+                      API Key
+                    </th>
+                    <th
+                      class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                    >
                       请求数
                     </th>
                     <th
@@ -92,6 +97,38 @@
                     <td class="px-4 py-2 text-sm text-gray-800 dark:text-gray-200">
                       {{ k.name }}
                     </td>
+                    <td class="px-4 py-2">
+                      <div class="flex items-center gap-2">
+                        <code
+                          v-if="k.key"
+                          class="max-w-xs truncate rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                          :title="k.key"
+                        >
+                          {{ k.key }}
+                        </code>
+                        <span v-else class="text-xs text-gray-400">-</span>
+                        <button
+                          v-if="k.key"
+                          class="inline-flex items-center rounded p-1 text-gray-400 hover:text-blue-600"
+                          title="复制 API Key"
+                          @click="copyApiKey(k.key)"
+                        >
+                          <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
                     <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300">
                       {{ formatNumber(k.usage?.requests || 0) }}
                     </td>
@@ -111,7 +148,7 @@
                     </td>
                   </tr>
                   <tr v-if="detailKeys.length === 0">
-                    <td class="px-4 py-6 text-center text-sm text-gray-500" colspan="6">
+                    <td class="px-4 py-6 text-center text-sm text-gray-500" colspan="7">
                       暂无 API Keys
                     </td>
                   </tr>
@@ -315,6 +352,34 @@ function formatDate(s) {
     return new Date(s).toLocaleString()
   } catch {
     return '-'
+  }
+}
+
+async function copyApiKey(key) {
+  if (!key) return
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(key)
+      showToast('已复制到剪贴板', 'success')
+    } else {
+      // 降级方案：使用传统方法
+      const textArea = document.createElement('textarea')
+      textArea.value = key
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        showToast('已复制到剪贴板', 'success')
+      } catch (err) {
+        showToast('复制失败，请手动复制', 'error')
+      }
+      document.body.removeChild(textArea)
+    }
+  } catch (err) {
+    console.error('复制失败:', err)
+    showToast('复制失败，请手动复制', 'error')
   }
 }
 

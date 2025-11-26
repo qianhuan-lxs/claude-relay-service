@@ -83,17 +83,100 @@
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-semibold text-white">使用趋势</h2>
           </div>
-          <div class="h-64">
+          <div class="h-64 relative">
             <div v-if="loading" class="h-full flex items-center justify-center text-gray-400">加载中...</div>
             <div v-else-if="!dailyStats?.length" class="h-full flex items-center justify-center text-gray-500">暂无数据</div>
-            <div v-else class="h-full flex flex-col justify-end gap-2">
-              <div class="flex items-end gap-2 h-48">
-                <div v-for="(d, idx) in dailyStats" :key="idx" class="flex-1">
-                  <div class="w-full bg-blue-500/30 rounded-t" :style="{ height: barHeight(d.requests) }"></div>
+            <div v-else class="h-full relative">
+              <!-- Y轴坐标 -->
+              <div class="absolute left-0 top-0 bottom-8 w-12 flex flex-col justify-between text-xs text-gray-500">
+                <div v-for="(tick, idx) in yAxisTicks" :key="idx" class="text-right pr-2">
+                  {{ tick }}
                 </div>
               </div>
-              <div class="grid grid-cols-6 gap-2 text-xs text-gray-500">
-                <div v-for="(d, idx) in tickedDates" :key="idx" class="truncate">{{ d }}</div>
+              
+              <!-- 图表区域 -->
+              <div ref="chartContainer" class="ml-12 mr-2 h-full pb-8 relative" @mouseleave="hoveredIndex = null">
+                <svg :width="chartWidth" :height="chartHeight" class="w-full" style="max-width: 100%; height: 200px;" preserveAspectRatio="none">
+                  <!-- 网格线 -->
+                  <g v-for="(tick, idx) in yAxisTicks" :key="`grid-${idx}`">
+                    <line
+                      :x1="padding.left"
+                      :y1="getYPosition(tick)"
+                      :x2="chartWidth - padding.right"
+                      :y2="getYPosition(tick)"
+                      stroke="rgba(255, 255, 255, 0.1)"
+                      stroke-width="1"
+                      stroke-dasharray="2,2"
+                    />
+                  </g>
+                  
+                  <!-- 折线 -->
+                  <polyline
+                    v-if="linePoints"
+                    :points="linePoints"
+                    fill="none"
+                    stroke="rgb(59, 130, 246)"
+                    stroke-width="2.5"
+                    class="transition-all duration-300"
+                  />
+                  
+                  <!-- 数据点 -->
+                  <circle
+                    v-for="(point, idx) in chartPoints"
+                    :key="`point-${idx}`"
+                    :cx="point.x"
+                    :cy="point.y"
+                    :r="hoveredIndex === idx ? 6 : 4"
+                    fill="rgb(59, 130, 246)"
+                    stroke="white"
+                    stroke-width="2"
+                    class="transition-all duration-300 cursor-pointer"
+                    @mouseenter="hoveredIndex = idx"
+                    @mouseleave="hoveredIndex = null"
+                  />
+                  
+                  <!-- Hover 高亮线 -->
+                  <line
+                    v-if="hoveredIndex !== null && chartPoints[hoveredIndex]"
+                    :x1="chartPoints[hoveredIndex].x"
+                    :y1="padding.top"
+                    :x2="chartPoints[hoveredIndex].x"
+                    :y2="chartHeight - padding.bottom"
+                    stroke="rgba(255, 255, 255, 0.3)"
+                    stroke-width="1"
+                    stroke-dasharray="4,4"
+                  />
+                </svg>
+                
+                <!-- X轴日期标签 -->
+                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500">
+                  <div
+                    v-for="(d, idx) in dailyStats"
+                    :key="idx"
+                    class="flex-1 text-center"
+                    :class="{ 'font-semibold text-blue-400': hoveredIndex === idx }"
+                  >
+                    {{ formatDateLabel(d.date) }}
+                  </div>
+                </div>
+                
+                <!-- Hover Tooltip -->
+                <div
+                  v-if="hoveredIndex !== null && dailyStats[hoveredIndex]"
+                  class="absolute bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 shadow-lg z-10 pointer-events-none"
+                  :style="{
+                    left: `${chartPoints[hoveredIndex]?.x - 50}px`,
+                    top: `${chartPoints[hoveredIndex]?.y - 60}px`,
+                    transform: 'translateX(-50%)'
+                  }"
+                >
+                  <div class="text-white text-sm font-semibold mb-1">
+                    {{ formatDateLabel(dailyStats[hoveredIndex].date) }}
+                  </div>
+                  <div class="text-blue-400 text-xs">
+                    {{ dailyStats[hoveredIndex].requests || 0 }} 次请求
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -117,32 +200,6 @@
         </div>
       </div>
 
-      <!-- Recent Activity Table -->
-      <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-        <h2 class="text-xl font-semibold text-white mb-6">最近活动</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-white/10">
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">时间</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">端点</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">状态</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Token数</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">消费</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-white/5">
-                <td colspan="5" class="py-8 text-center text-gray-500">
-                  暂无活动记录
-                  <p class="text-sm text-gray-600 mt-2">数据将在首次使用后显示</p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <!-- API Keys Summary -->
       <div class="mt-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
         <div class="flex items-center justify-between mb-4">
@@ -154,6 +211,7 @@
             <thead>
               <tr class="border-b border-white/10">
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">名称</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">API Key</th>
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">创建时间</th>
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">请求数</th>
                 <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Tokens</th>
@@ -163,10 +221,25 @@
             </thead>
             <tbody>
               <tr v-if="!apiKeys.length">
-                <td colspan="6" class="py-8 text-center text-gray-500">暂无 API Keys</td>
+                <td colspan="7" class="py-8 text-center text-gray-500">暂无 API Keys</td>
               </tr>
               <tr v-for="k in apiKeys" :key="k.id" class="border-b border-white/5">
                 <td class="py-3 px-4 text-gray-200">{{ k.name || k.keyPreview || k.id }}</td>
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2">
+                    <code class="text-xs text-gray-300 font-mono bg-white/5 px-2 py-1 rounded">{{ k.key || 'N/A' }}</code>
+                    <button
+                      v-if="k.key"
+                      @click="copyApiKey(k.key)"
+                      class="text-blue-400 hover:text-blue-300 transition-colors"
+                      title="复制 API Key"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
                 <td class="py-3 px-4 text-gray-400 text-sm">{{ formatDate(k.createdAt) }}</td>
                 <td class="py-3 px-4 text-gray-300">{{ k.usage?.requests || 0 }}</td>
                 <td class="py-3 px-4 text-gray-300">{{ (k.usage?.inputTokens || 0) + (k.usage?.outputTokens || 0) }}</td>
@@ -194,9 +267,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import { useStatisticsStore } from '@/stores/statistics'
+import { showToast } from '@/utils/toast'
 
 const statistics = useStatisticsStore()
 const loading = computed(() => statistics.loading)
@@ -214,30 +288,99 @@ function setPeriod(p) {
 const dailyStats = computed(() => stats.value?.dailyStats || [])
 const modelStats = computed(() => stats.value?.modelStats || [])
 const apiKeys = computed(() => statistics.apiKeys || [])
+const hoveredIndex = ref(null)
 
-function barHeight(value) {
-  const max = Math.max(...dailyStats.value.map((d) => d.requests || 0), 1)
-  const h = Math.round(((value || 0) / max) * 100)
-  return `${h}%`
+// 图表尺寸（响应式）
+const chartContainer = ref(null)
+const chartWidth = ref(500)
+const chartHeight = 200
+const padding = { top: 10, right: 10, bottom: 30, left: 10 }
+
+// 初始化图表宽度
+onMounted(() => {
+  // 进入页面时立即加载数据
+  statistics.fetchUsageStats(period.value || 'week')
+  statistics.fetchUserApiKeys(true)
+  
+  // 监听容器尺寸变化
+  nextTick(() => {
+    if (chartContainer.value) {
+      // 立即设置初始宽度
+      chartWidth.value = chartContainer.value.offsetWidth - 50
+      
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          chartWidth.value = entry.contentRect.width - 50 // 减去左右padding
+        }
+      })
+      resizeObserver.observe(chartContainer.value)
+    }
+  })
+})
+
+
+// Y轴刻度
+const yAxisTicks = computed(() => {
+  if (!dailyStats.value?.length) return []
+  const values = dailyStats.value.map((d) => d.requests || 0)
+  const max = Math.max(...values, 1)
+  const ticks = []
+  const tickCount = 5
+  for (let i = 0; i <= tickCount; i++) {
+    const value = Math.round((max / tickCount) * i)
+    ticks.push(value)
+  }
+  return ticks.reverse()
+})
+
+// 计算Y轴位置
+function getYPosition(value) {
+  if (!dailyStats.value?.length) return padding.top
+  const values = dailyStats.value.map((d) => d.requests || 0)
+  const max = Math.max(...values, 1)
+  const ratio = value / max
+  const height = chartHeight - padding.top - padding.bottom
+  return padding.top + height - (height * ratio)
 }
 
-const tickedDates = computed(() => {
+// 计算折线图数据点
+const chartPoints = computed(() => {
   if (!dailyStats.value?.length) return []
-  const step = Math.ceil(dailyStats.value.length / 6)
-  return dailyStats.value.map((d) => d.date).filter((_, i) => i % step === 0)
+  const values = dailyStats.value.map((d) => d.requests || 0)
+  const max = Math.max(...values, 1)
+  const width = chartWidth.value - padding.left - padding.right
+  const height = chartHeight - padding.top - padding.bottom
+  const stepX = dailyStats.value.length > 1 ? width / (dailyStats.value.length - 1) : 0
+  
+  return dailyStats.value.map((d, idx) => {
+    const x = padding.left + idx * stepX
+    const ratio = (d.requests || 0) / max
+    const y = padding.top + height - (height * ratio)
+    return { x, y, value: d.requests || 0 }
+  })
 })
+
+// 折线路径
+const linePoints = computed(() => {
+  return chartPoints.value.map((p) => `${p.x},${p.y}`).join(' ')
+})
+
+// 格式化日期标签
+function formatDateLabel(dateStr) {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length >= 2) {
+    return `${parts[1]}-${parts[2]}`
+  }
+  return dateStr
+}
+
 
 function modelPercent(m) {
   const total = modelStats.value.reduce((sum, x) => sum + (x.requests || 0), 0) || 1
   return `${Math.min(100, Math.round(((m.requests || 0) / total) * 100))}%`
 }
 
-onMounted(() => {
-  if (!stats.value) {
-    statistics.fetchUsageStats('week')
-  }
-  statistics.fetchUserApiKeys(true)
-})
 
 function formatDate(value) {
   if (!value) return '-'
@@ -245,6 +388,16 @@ function formatDate(value) {
     return new Date(value).toLocaleString()
   } catch (_) {
     return String(value)
+  }
+}
+
+async function copyApiKey(key) {
+  try {
+    await navigator.clipboard.writeText(key)
+    showToast('API Key 已复制到剪贴板', 'success')
+  } catch (error) {
+    console.error('复制失败:', error)
+    showToast('复制失败，请手动复制', 'error')
   }
 }
 </script>

@@ -27,6 +27,9 @@ const droidRoutes = require('./routes/droidRoutes')
 const userRoutes = require('./routes/userRoutes')
 const azureOpenaiRoutes = require('./routes/azureOpenaiRoutes')
 const webhookRoutes = require('./routes/webhook')
+const planRoutes = require('./routes/planRoutes')
+const apiKeyTemplateRoutes = require('./routes/apiKeyTemplateRoutes')
+const orderRoutes = require('./routes/orderRoutes')
 
 // Import middleware
 const {
@@ -256,10 +259,28 @@ class Application {
       }
 
       // 🛣️ 路由
+      // 套餐、模板、订单路由必须在 apiRoutes 和 unifiedRoutes 之前注册，避免被拦截
+      // 套餐路由：支持 /admin/plans 和 /api/admin/plans 和 /webapi/admin/plans
+      this.app.use('/admin', planRoutes)
+      this.app.use('/api', planRoutes)
+      this.app.use('/webapi', planRoutes) // 管理端开发环境路由
+      // API Key 模板路由
+      this.app.use('/admin', apiKeyTemplateRoutes)
+      this.app.use('/api', apiKeyTemplateRoutes)
+      this.app.use('/webapi', apiKeyTemplateRoutes) // 管理端开发环境路由
+      // 订单路由
+      this.app.use('/admin', orderRoutes)
+      this.app.use('/api', orderRoutes)
+      this.app.use('/webapi', orderRoutes) // 管理端开发环境路由
+      // API 路由（放在后面，避免拦截管理路由）
       this.app.use('/api', apiRoutes)
       this.app.use('/api', unifiedRoutes) // 统一智能路由（支持 /v1/chat/completions 等）
       this.app.use('/claude', apiRoutes) // /claude 路由别名，与 /api 功能相同
+      this.app.use('/webapi', apiRoutes) // /webapi 路由别名，用于管理端开发环境
+      this.app.use('/webapi', unifiedRoutes) // /webapi 统一智能路由
+      // Admin 路由（放在最后，避免拦截其他路由）
       this.app.use('/admin', adminRoutes)
+      this.app.use('/webapi/admin', adminRoutes) // 管理端开发环境路由
       this.app.use('/users', userRoutes)
       // 客户端认证路由（登录/注册等）
       this.app.use('/api/client/auth', require('./routes/clientAuthRoutes'))
@@ -301,6 +322,7 @@ class Application {
           if (
             req.path.startsWith('/admin') ||
             req.path.startsWith('/api') ||
+            req.path.startsWith('/webapi') ||
             req.path.startsWith('/admin-next') ||
             req.path.startsWith('/claude') ||
             req.path.startsWith('/gemini') ||

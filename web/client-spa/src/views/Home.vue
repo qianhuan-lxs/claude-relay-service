@@ -12,6 +12,15 @@
         <div class="hidden md:flex items-center space-x-8">
           <a href="#features" class="text-gray-300 hover:text-white transition-colors">功能</a>
           <router-link to="/docs" class="text-gray-300 hover:text-white transition-colors">教程</router-link>
+          <router-link
+            to="/plans"
+            class="relative text-gray-300 hover:text-white transition-colors"
+          >
+            <span class="relative">
+              限时优惠
+              <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            </span>
+          </router-link>
         </div>
         <!-- 未登录状态：显示登录和注册按钮 -->
         <div v-if="!authStore.isAuthenticated" class="flex items-center space-x-4">

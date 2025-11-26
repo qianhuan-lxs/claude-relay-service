@@ -128,7 +128,21 @@ class RedisClient {
     }
 
     await client.hset(key, keyData)
-    await client.expire(key, 86400 * 365) // 1年过期
+    // 设置过期时间为 10 年（315360000 秒），避免数据意外丢失
+    // 注意：这不会影响 API Key 的业务过期时间（expiresAt 字段）
+    await client.expire(key, 86400 * 365 * 10) // 10年过期
+  }
+
+  // 🔄 续期 API Key 的 Redis 过期时间（当 API Key 被使用时调用）
+  async extendApiKeyTTL(keyId) {
+    const key = `apikey:${keyId}`
+    const client = this.getClientSafe()
+    // 检查 key 是否存在
+    const exists = await client.exists(key)
+    if (exists) {
+      // 续期 10 年
+      await client.expire(key, 86400 * 365 * 10)
+    }
   }
 
   async getApiKey(keyId) {
@@ -1999,12 +2013,20 @@ redisClient.getWeekStringInTimezone = getWeekStringInTimezone
 redisClient.createAnnouncement = async function (announcementData) {
   try {
     const client = this.getClientSafe()
-    const { id, title, content, type = 'normal', isPinned = false, isActive = true, createdBy } = announcementData
+    const {
+      id,
+      title,
+      content,
+      type = 'normal',
+      isPinned = false,
+      isActive = true,
+      createdBy
+    } = announcementData
     const now = new Date().toISOString()
-    
+
     const key = `announcement:${id}`
     const listKey = 'announcements:list'
-    
+
     const announcement = {
       id,
       title,
@@ -2016,14 +2038,14 @@ redisClient.createAnnouncement = async function (announcementData) {
       updatedAt: now,
       ...(createdBy && { createdBy })
     }
-    
+
     // 存储公告hash
     await client.hset(key, announcement)
-    
+
     // 添加到sorted set，使用更新时间戳作为score（倒序，新的在前）
     const score = new Date(now).getTime()
     await client.zadd(listKey, score, id)
-    
+
     logger.debug(`✅ Created announcement: ${id}`)
     return announcement
   } catch (error) {
@@ -2037,15 +2059,16 @@ redisClient.getAnnouncement = async function (id) {
     const client = this.getClientSafe()
     const key = `announcement:${id}`
     const data = await client.hgetall(key)
-    
+
     if (!data || Object.keys(data).length === 0) {
       return null
     }
-    
+
     // 转换布尔值字符串，并确保 type 有有效值
     return {
       ...data,
-      type: data.type && (data.type === 'important' || data.type === 'normal') ? data.type : 'normal',
+      type:
+        data.type && (data.type === 'important' || data.type === 'normal') ? data.type : 'normal',
       isPinned: data.isPinned === 'true',
       isActive: data.isActive === 'true'
     }
@@ -2059,10 +2082,10 @@ redisClient.getAllAnnouncements = async function (activeOnly = false) {
   try {
     const client = this.getClientSafe()
     const listKey = 'announcements:list'
-    
+
     // 获取所有公告ID（按更新时间倒序，新的在前）
     const ids = await client.zrevrange(listKey, 0, -1)
-    
+
     const announcements = []
     for (const id of ids) {
       const announcement = await this.getAnnouncement(id)
@@ -2074,14 +2097,18 @@ redisClient.getAllAnnouncements = async function (activeOnly = false) {
         announcements.push(announcement)
       }
     }
-    
+
     // 置顶的排在前面
     announcements.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1
-      if (!a.isPinned && b.isPinned) return 1
+      if (a.isPinned && !b.isPinned) {
+        return -1
+      }
+      if (!a.isPinned && b.isPinned) {
+        return 1
+      }
       return new Date(b.updatedAt) - new Date(a.updatedAt)
     })
-    
+
     return announcements
   } catch (error) {
     logger.error(`❌ Failed to get all announcements:`, error)
@@ -2094,20 +2121,20 @@ redisClient.updateAnnouncement = async function (id, updates) {
     const client = this.getClientSafe()
     const key = `announcement:${id}`
     const listKey = 'announcements:list'
-    
+
     // 检查公告是否存在
     const existing = await this.getAnnouncement(id)
     if (!existing) {
       throw new Error(`Announcement ${id} not found`)
     }
-    
+
     // 更新数据
     const updatedData = {
       ...existing,
       ...updates,
       updatedAt: new Date().toISOString()
     }
-    
+
     // 转换布尔值为字符串
     if (typeof updatedData.isPinned === 'boolean') {
       updatedData.isPinned = updatedData.isPinned.toString()
@@ -2115,14 +2142,14 @@ redisClient.updateAnnouncement = async function (id, updates) {
     if (typeof updatedData.isActive === 'boolean') {
       updatedData.isActive = updatedData.isActive.toString()
     }
-    
+
     // 更新hash
     await client.hset(key, updatedData)
-    
+
     // 更新sorted set的score
     const score = new Date(updatedData.updatedAt).getTime()
     await client.zadd(listKey, score, id)
-    
+
     logger.debug(`✅ Updated announcement: ${id}`)
     return {
       ...updatedData,
@@ -2140,13 +2167,13 @@ redisClient.deleteAnnouncement = async function (id) {
     const client = this.getClientSafe()
     const key = `announcement:${id}`
     const listKey = 'announcements:list'
-    
+
     // 删除hash
     await client.del(key)
-    
+
     // 从sorted set中移除
     await client.zrem(listKey, id)
-    
+
     logger.debug(`✅ Deleted announcement: ${id}`)
     return true
   } catch (error) {
@@ -2159,12 +2186,20 @@ redisClient.deleteAnnouncement = async function (id) {
 redisClient.createTutorial = async function (tutorialData) {
   try {
     const client = this.getClientSafe()
-    const { id, title, content, category = '快速开始', sortOrder = 0, isActive = true, createdBy } = tutorialData
+    const {
+      id,
+      title,
+      content,
+      category = '快速开始',
+      sortOrder = 0,
+      isActive = true,
+      createdBy
+    } = tutorialData
     const now = new Date().toISOString()
-    
+
     const key = `tutorial:${id}`
     const listKey = 'tutorials:list'
-    
+
     const tutorial = {
       id,
       title,
@@ -2176,13 +2211,13 @@ redisClient.createTutorial = async function (tutorialData) {
       updatedAt: now,
       ...(createdBy && { createdBy })
     }
-    
+
     // 存储教程hash
     await client.hset(key, tutorial)
-    
+
     // 添加到sorted set，使用sortOrder作为score
     await client.zadd(listKey, sortOrder, id)
-    
+
     logger.debug(`✅ Created tutorial: ${id}`)
     return tutorial
   } catch (error) {
@@ -2196,11 +2231,11 @@ redisClient.getTutorial = async function (id) {
     const client = this.getClientSafe()
     const key = `tutorial:${id}`
     const data = await client.hgetall(key)
-    
+
     if (!data || Object.keys(data).length === 0) {
       return null
     }
-    
+
     // 转换类型
     return {
       ...data,
@@ -2217,10 +2252,10 @@ redisClient.getAllTutorials = async function (activeOnly = false) {
   try {
     const client = this.getClientSafe()
     const listKey = 'tutorials:list'
-    
+
     // 获取所有教程ID（按sortOrder升序）
     const ids = await client.zrange(listKey, 0, -1)
-    
+
     const tutorials = []
     for (const id of ids) {
       const tutorial = await this.getTutorial(id)
@@ -2232,10 +2267,10 @@ redisClient.getAllTutorials = async function (activeOnly = false) {
         tutorials.push(tutorial)
       }
     }
-    
+
     // 确保按sortOrder排序
     tutorials.sort((a, b) => a.sortOrder - b.sortOrder)
-    
+
     return tutorials
   } catch (error) {
     logger.error(`❌ Failed to get all tutorials:`, error)
@@ -2248,20 +2283,20 @@ redisClient.updateTutorial = async function (id, updates) {
     const client = this.getClientSafe()
     const key = `tutorial:${id}`
     const listKey = 'tutorials:list'
-    
+
     // 检查教程是否存在
     const existing = await this.getTutorial(id)
     if (!existing) {
       throw new Error(`Tutorial ${id} not found`)
     }
-    
+
     // 更新数据
     const updatedData = {
       ...existing,
       ...updates,
       updatedAt: new Date().toISOString()
     }
-    
+
     // 转换类型为字符串
     if (typeof updatedData.sortOrder === 'number') {
       updatedData.sortOrder = updatedData.sortOrder.toString()
@@ -2269,14 +2304,14 @@ redisClient.updateTutorial = async function (id, updates) {
     if (typeof updatedData.isActive === 'boolean') {
       updatedData.isActive = updatedData.isActive.toString()
     }
-    
+
     // 更新hash
     await client.hset(key, updatedData)
-    
+
     // 更新sorted set的score（sortOrder）
     const sortOrder = parseInt(updatedData.sortOrder) || 0
     await client.zadd(listKey, sortOrder, id)
-    
+
     logger.debug(`✅ Updated tutorial: ${id}`)
     return {
       ...updatedData,
@@ -2294,17 +2329,546 @@ redisClient.deleteTutorial = async function (id) {
     const client = this.getClientSafe()
     const key = `tutorial:${id}`
     const listKey = 'tutorials:list'
-    
+
     // 删除hash
     await client.del(key)
-    
+
     // 从sorted set中移除
     await client.zrem(listKey, id)
-    
+
     logger.debug(`✅ Deleted tutorial: ${id}`)
     return true
   } catch (error) {
     logger.error(`❌ Failed to delete tutorial ${id}:`, error)
+    throw error
+  }
+}
+
+// 📦 套餐管理方法
+redisClient.createPlan = async function (planData) {
+  try {
+    const client = this.getClientSafe()
+    const { id, name, type, price, xianyuLink, apiKeyTemplateId, isActive = true } = planData
+    const now = new Date().toISOString()
+
+    const key = `plan:${id}`
+    const listKey = 'plans:list'
+
+    const planRecord = {
+      id,
+      name,
+      type, // monthly 或 usage
+      price: String(price),
+      xianyuLink: xianyuLink || '',
+      apiKeyTemplateId: apiKeyTemplateId || '',
+      isActive: String(isActive),
+      createdAt: now
+    }
+
+    // 月卡特有字段
+    if (type === 'monthly') {
+      planRecord.duration = String(planData.duration || 30)
+      planRecord.dailyLimitActual = String(planData.dailyLimitActual || 0)
+      planRecord.dailyLimitDisplay = String(planData.dailyLimitDisplay || 0)
+      planRecord.speedMultiplier = String(planData.speedMultiplier || 1)
+      planRecord.description = planData.description || ''
+    }
+
+    // 计量特有字段
+    if (type === 'usage') {
+      planRecord.totalLimitActual = String(planData.totalLimitActual || 0)
+      planRecord.totalLimitDisplay = String(planData.totalLimitDisplay || 0)
+      planRecord.speedMultiplier = String(planData.speedMultiplier || 1)
+    }
+
+    await client.hset(key, planRecord)
+    await client.zadd(listKey, Date.now(), id)
+
+    logger.debug(`✅ Created plan: ${name} (${id})`)
+    return planRecord
+  } catch (error) {
+    logger.error(`❌ Failed to create plan:`, error)
+    throw error
+  }
+}
+
+redisClient.getPlan = async function (planId) {
+  try {
+    const client = this.getClientSafe()
+    const key = `plan:${planId}`
+    const plan = await client.hgetall(key)
+
+    if (!plan || Object.keys(plan).length === 0) {
+      return null
+    }
+
+    return plan
+  } catch (error) {
+    logger.error(`❌ Failed to get plan ${planId}:`, error)
+    throw error
+  }
+}
+
+redisClient.getAllPlans = async function (includeInactive = false) {
+  try {
+    const client = this.getClientSafe()
+    const listKey = 'plans:list'
+    const planIds = await client.zrange(listKey, 0, -1)
+
+    const plans = []
+    for (const planId of planIds) {
+      const plan = await this.getPlan(planId)
+      if (plan) {
+        if (includeInactive || plan.isActive === 'true') {
+          plans.push(plan)
+        }
+      }
+    }
+
+    return plans
+  } catch (error) {
+    logger.error(`❌ Failed to get all plans:`, error)
+    throw error
+  }
+}
+
+redisClient.updatePlan = async function (planId, planData) {
+  try {
+    const client = this.getClientSafe()
+    const key = `plan:${planId}`
+
+    const existingPlan = await this.getPlan(planId)
+    if (!existingPlan) {
+      throw new Error(`Plan ${planId} not found`)
+    }
+
+    const updates = {}
+    Object.keys(planData).forEach((k) => {
+      if (planData[k] !== undefined && planData[k] !== null) {
+        updates[k] = String(planData[k])
+      }
+    })
+
+    if (Object.keys(updates).length > 0) {
+      await client.hset(key, updates)
+      logger.debug(`✅ Updated plan: ${planId}`)
+    }
+
+    return await this.getPlan(planId)
+  } catch (error) {
+    logger.error(`❌ Failed to update plan ${planId}:`, error)
+    throw error
+  }
+}
+
+redisClient.deletePlan = async function (planId) {
+  try {
+    const client = this.getClientSafe()
+    const key = `plan:${planId}`
+    const listKey = 'plans:list'
+
+    await client.del(key)
+    await client.zrem(listKey, planId)
+
+    logger.debug(`✅ Deleted plan: ${planId}`)
+    return true
+  } catch (error) {
+    logger.error(`❌ Failed to delete plan ${planId}:`, error)
+    throw error
+  }
+}
+
+// 🔧 API Key 模板管理方法
+redisClient.createApiKeyTemplate = async function (templateData) {
+  try {
+    const client = this.getClientSafe()
+    const { id, name, planId } = templateData
+    const now = new Date().toISOString()
+
+    const key = `apikey_template:${id}`
+    const listKey = 'apikey_templates:list'
+
+    const templateRecord = {
+      id,
+      name,
+      planId: planId || '',
+      createdAt: now
+    }
+
+    // 复制所有 API Key 配置字段
+    const apiKeyFields = [
+      'description',
+      'tokenLimit',
+      'concurrencyLimit',
+      'rateLimitWindow',
+      'rateLimitRequests',
+      'rateLimitCost',
+      'claudeAccountId',
+      'claudeConsoleAccountId',
+      'geminiAccountId',
+      'openaiAccountId',
+      'azureOpenaiAccountId',
+      'bedrockAccountId',
+      'droidAccountId',
+      'permissions',
+      'enableModelRestriction',
+      'restrictedModels',
+      'enableClientRestriction',
+      'allowedClients',
+      'dailyCostLimit',
+      'totalCostLimit',
+      'weeklyOpusCostLimit',
+      'tags',
+      'icon'
+    ]
+
+    apiKeyFields.forEach((field) => {
+      if (templateData[field] !== undefined && templateData[field] !== null) {
+        if (typeof templateData[field] === 'object') {
+          templateRecord[field] = JSON.stringify(templateData[field])
+        } else {
+          templateRecord[field] = String(templateData[field])
+        }
+      }
+    })
+
+    await client.hset(key, templateRecord)
+    await client.zadd(listKey, Date.now(), id)
+
+    logger.debug(`✅ Created API Key template: ${name} (${id})`)
+    return templateRecord
+  } catch (error) {
+    logger.error(`❌ Failed to create API Key template:`, error)
+    throw error
+  }
+}
+
+redisClient.getApiKeyTemplate = async function (templateId) {
+  try {
+    const client = this.getClientSafe()
+    const key = `apikey_template:${templateId}`
+    const template = await client.hgetall(key)
+
+    if (!template || Object.keys(template).length === 0) {
+      return null
+    }
+
+    // 解析 JSON 字段
+    if (template.restrictedModels) {
+      try {
+        template.restrictedModels = JSON.parse(template.restrictedModels)
+      } catch (e) {
+        template.restrictedModels = []
+      }
+    }
+    if (template.allowedClients) {
+      try {
+        template.allowedClients = JSON.parse(template.allowedClients)
+      } catch (e) {
+        template.allowedClients = []
+      }
+    }
+    if (template.tags) {
+      try {
+        template.tags = JSON.parse(template.tags)
+      } catch (e) {
+        template.tags = []
+      }
+    }
+
+    return template
+  } catch (error) {
+    logger.error(`❌ Failed to get API Key template ${templateId}:`, error)
+    throw error
+  }
+}
+
+redisClient.getApiKeyTemplateByPlanId = async function (planId) {
+  try {
+    const client = this.getClientSafe()
+    const listKey = 'apikey_templates:list'
+    const templateIds = await client.zrange(listKey, 0, -1)
+
+    for (const templateId of templateIds) {
+      const template = await this.getApiKeyTemplate(templateId)
+      if (template && template.planId === planId) {
+        return template
+      }
+    }
+
+    return null
+  } catch (error) {
+    logger.error(`❌ Failed to get API Key template by planId ${planId}:`, error)
+    throw error
+  }
+}
+
+redisClient.getAllApiKeyTemplates = async function () {
+  try {
+    const client = this.getClientSafe()
+    const listKey = 'apikey_templates:list'
+    const templateIds = await client.zrange(listKey, 0, -1)
+
+    const templates = []
+    for (const templateId of templateIds) {
+      const template = await this.getApiKeyTemplate(templateId)
+      if (template) {
+        templates.push(template)
+      }
+    }
+
+    return templates
+  } catch (error) {
+    logger.error(`❌ Failed to get all API Key templates:`, error)
+    throw error
+  }
+}
+
+redisClient.updateApiKeyTemplate = async function (templateId, templateData) {
+  try {
+    const client = this.getClientSafe()
+    const key = `apikey_template:${templateId}`
+
+    const existingTemplate = await this.getApiKeyTemplate(templateId)
+    if (!existingTemplate) {
+      throw new Error(`API Key template ${templateId} not found`)
+    }
+
+    const updates = {}
+    Object.keys(templateData).forEach((k) => {
+      if (templateData[k] !== undefined && templateData[k] !== null) {
+        if (typeof templateData[k] === 'object') {
+          updates[k] = JSON.stringify(templateData[k])
+        } else {
+          updates[k] = String(templateData[k])
+        }
+      }
+    })
+
+    if (Object.keys(updates).length > 0) {
+      await client.hset(key, updates)
+      logger.debug(`✅ Updated API Key template: ${templateId}`)
+    }
+
+    return await this.getApiKeyTemplate(templateId)
+  } catch (error) {
+    logger.error(`❌ Failed to update API Key template ${templateId}:`, error)
+    throw error
+  }
+}
+
+redisClient.deleteApiKeyTemplate = async function (templateId) {
+  try {
+    const client = this.getClientSafe()
+    const key = `apikey_template:${templateId}`
+    const listKey = 'apikey_templates:list'
+
+    await client.del(key)
+    await client.zrem(listKey, templateId)
+
+    logger.debug(`✅ Deleted API Key template: ${templateId}`)
+    return true
+  } catch (error) {
+    logger.error(`❌ Failed to delete API Key template ${templateId}:`, error)
+    throw error
+  }
+}
+
+// 📋 订单管理方法
+redisClient.createOrder = async function (orderData) {
+  try {
+    const client = this.getClientSafe()
+    const { id, userId, userUsername, planId, planName, price, expiresAt } = orderData
+    const now = new Date().toISOString()
+
+    const key = `order:${id}`
+    const userOrdersKey = `user_orders:${userId}`
+    const listKey = 'orders:list'
+
+    const orderRecord = {
+      id,
+      userId,
+      userUsername: userUsername || '',
+      planId,
+      planName: planName || '',
+      status: 'pending',
+      price: String(price),
+      apiKeyId: '',
+      createdAt: now,
+      activatedAt: '',
+      activatedBy: '',
+      expiresAt: expiresAt || ''
+    }
+
+    await client.hset(key, orderRecord)
+    await client.zadd(listKey, Date.now(), id)
+    await client.zadd(userOrdersKey, Date.now(), id)
+
+    logger.debug(`✅ Created order: ${id} for user ${userUsername}`)
+    return orderRecord
+  } catch (error) {
+    logger.error(`❌ Failed to create order:`, error)
+    throw error
+  }
+}
+
+redisClient.getOrder = async function (orderId) {
+  try {
+    const client = this.getClientSafe()
+    const key = `order:${orderId}`
+    const order = await client.hgetall(key)
+
+    if (!order || Object.keys(order).length === 0) {
+      return null
+    }
+
+    return order
+  } catch (error) {
+    logger.error(`❌ Failed to get order ${orderId}:`, error)
+    throw error
+  }
+}
+
+redisClient.getUserOrders = async function (userId) {
+  try {
+    const client = this.getClientSafe()
+    const userOrdersKey = `user_orders:${userId}`
+    const orderIds = await client.zrange(userOrdersKey, 0, -1)
+
+    const orders = []
+    for (const orderId of orderIds) {
+      const order = await this.getOrder(orderId)
+      if (order) {
+        orders.push(order)
+      }
+    }
+
+    // 按创建时间倒序排列
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+    return orders
+  } catch (error) {
+    logger.error(`❌ Failed to get user orders for ${userId}:`, error)
+    throw error
+  }
+}
+
+redisClient.getAllOrders = async function (status = null) {
+  try {
+    const client = this.getClientSafe()
+    const listKey = 'orders:list'
+    const orderIds = await client.zrange(listKey, 0, -1)
+
+    const orders = []
+    for (const orderId of orderIds) {
+      const order = await this.getOrder(orderId)
+      if (order) {
+        if (!status || order.status === status) {
+          orders.push(order)
+        }
+      }
+    }
+
+    // 按创建时间倒序排列
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+    return orders
+  } catch (error) {
+    logger.error(`❌ Failed to get all orders:`, error)
+    throw error
+  }
+}
+
+redisClient.updateOrder = async function (orderId, orderData) {
+  try {
+    const client = this.getClientSafe()
+    const key = `order:${orderId}`
+
+    const existingOrder = await this.getOrder(orderId)
+    if (!existingOrder) {
+      throw new Error(`Order ${orderId} not found`)
+    }
+
+    const updates = {}
+    Object.keys(orderData).forEach((k) => {
+      if (orderData[k] !== undefined && orderData[k] !== null) {
+        updates[k] = String(orderData[k])
+      }
+    })
+
+    if (Object.keys(updates).length > 0) {
+      await client.hset(key, updates)
+      logger.debug(`✅ Updated order: ${orderId}`)
+    }
+
+    return await this.getOrder(orderId)
+  } catch (error) {
+    logger.error(`❌ Failed to update order ${orderId}:`, error)
+    throw error
+  }
+}
+
+redisClient.activateOrder = async function (orderId, apiKeyId, activatedBy) {
+  try {
+    const client = this.getClientSafe()
+    const now = new Date().toISOString()
+
+    await this.updateOrder(orderId, {
+      status: 'activated',
+      apiKeyId,
+      activatedAt: now,
+      activatedBy
+    })
+
+    logger.debug(`✅ Activated order: ${orderId} with API Key: ${apiKeyId}`)
+    return await this.getOrder(orderId)
+  } catch (error) {
+    logger.error(`❌ Failed to activate order ${orderId}:`, error)
+    throw error
+  }
+}
+
+redisClient.deleteOrder = async function (orderId) {
+  try {
+    const client = this.getClientSafe()
+    const order = await this.getOrder(orderId)
+    if (!order) {
+      throw new Error(`Order ${orderId} not found`)
+    }
+
+    const key = `order:${orderId}`
+    const userOrdersKey = `user_orders:${order.userId}`
+    const listKey = 'orders:list'
+
+    await client.del(key)
+    await client.zrem(listKey, orderId)
+    await client.zrem(userOrdersKey, orderId)
+
+    logger.debug(`✅ Deleted order: ${orderId}`)
+    return true
+  } catch (error) {
+    logger.error(`❌ Failed to delete order ${orderId}:`, error)
+    throw error
+  }
+}
+
+// 获取用户对特定套餐的待激活订单
+redisClient.getPendingOrderByUserAndPlan = async function (userId, planId) {
+  try {
+    const client = this.getClientSafe()
+    const userOrdersKey = `user_orders:${userId}`
+    const orderIds = await client.zrange(userOrdersKey, 0, -1)
+
+    for (const orderId of orderIds) {
+      const order = await this.getOrder(orderId)
+      if (order && order.status === 'pending' && order.planId === planId) {
+        return order
+      }
+    }
+
+    return null
+  } catch (error) {
+    logger.error(`❌ Failed to get pending order by user and plan:`, error)
     throw error
   }
 }
