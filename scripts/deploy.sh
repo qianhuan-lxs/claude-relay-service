@@ -147,6 +147,25 @@ configure_nginx() {
         return 1
     fi
     
+    # 禁用默认站点配置（避免显示 Nginx 欢迎页面）
+    print_info "检查并禁用默认 Nginx 站点配置..."
+    if [ "$OS" = "centos" ]; then
+        # CentOS/RHEL: 禁用 default.conf
+        if [ -f "/etc/nginx/conf.d/default.conf" ]; then
+            print_info "禁用默认配置: /etc/nginx/conf.d/default.conf"
+            sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled 2>/dev/null || true
+        fi
+    else
+        # Debian/Ubuntu: 删除 sites-enabled 中的 default 链接
+        if [ -L "/etc/nginx/sites-enabled/default" ]; then
+            print_info "禁用默认配置: /etc/nginx/sites-enabled/default"
+            sudo rm -f /etc/nginx/sites-enabled/default
+        elif [ -f "/etc/nginx/sites-enabled/default" ]; then
+            print_info "禁用默认配置: /etc/nginx/sites-enabled/default"
+            sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.disabled 2>/dev/null || true
+        fi
+    fi
+    
     # 读取域名（如果设置了环境变量）
     if [ -z "$NGINX_DOMAIN" ]; then
         print_info "提示: 可以通过环境变量 NGINX_DOMAIN 设置域名"
@@ -187,6 +206,7 @@ configure_nginx() {
         print_success "Nginx 配置测试通过"
     else
         print_error "Nginx 配置测试失败"
+        print_warning "如果出现 server_name 冲突，请运行: npm run fix:nginx:conflict"
         return 1
     fi
     
@@ -196,6 +216,7 @@ configure_nginx() {
     check_error "Nginx 重启失败"
     
     print_success "Nginx 配置完成"
+    print_info "默认站点配置已禁用，现在应该显示您的应用"
     print_info "配置文件位置: $NGINX_CONF_FILE"
     if [ "$NGINX_DOMAIN" != "_" ]; then
         print_info "域名: $NGINX_DOMAIN"
