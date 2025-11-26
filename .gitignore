@@ -103,7 +103,11 @@ jspm_packages/
 .nuxt
 # Gatsby files
 .cache/
-public
+# Ignore root public directory, but allow web/client-spa/public (source files)
+/public
+!web/
+!web/client-spa/
+!web/client-spa/public/
 
 # Vuepress build output
 .vuepress/dist

@@ -357,11 +357,45 @@ function formatDate(value) {
 
 async function copyApiKey(key) {
   try {
-    await navigator.clipboard.writeText(key)
-    showToast('API Key 已复制到剪贴板', 'success')
+    // 优先使用现代 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(key)
+      showToast('API Key 已复制到剪贴板', 'success')
+    } else {
+      // 降级方案：使用传统方法
+      const textArea = document.createElement('textarea')
+      textArea.value = key
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        showToast('API Key 已复制到剪贴板', 'success')
+      } catch (err) {
+        showToast('复制失败，请手动复制', 'error')
+      }
+      document.body.removeChild(textArea)
+    }
   } catch (error) {
     console.error('复制失败:', error)
-    showToast('复制失败，请手动复制', 'error')
+    // 如果 Clipboard API 失败，尝试降级方案
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = key
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      showToast('API Key 已复制到剪贴板', 'success')
+    } catch (err) {
+      console.error('降级复制也失败:', err)
+      showToast('复制失败，请手动复制', 'error')
+    }
   }
 }
 

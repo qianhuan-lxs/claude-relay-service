@@ -7144,6 +7144,126 @@ router.put('/oem-settings', authenticateAdmin, async (req, res) => {
   }
 })
 
+// 📦 数据导入/导出管理
+const multer = require('multer')
+const dataTransferService = require('../services/dataTransferService')
+const fs = require('fs')
+const path = require('path')
+
+// 确保 uploads 目录存在
+const uploadsDir = path.join(__dirname, '../../uploads')
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true })
+}
+
+const upload = multer({
+  dest: uploadsDir,
+  limits: {
+    fileSize: 100 * 1024 * 1024 // 100MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/json' || file.originalname.endsWith('.json')) {
+      cb(null, true)
+    } else {
+      cb(new Error('Only JSON files are allowed'), false)
+    }
+  }
+})
+
+// 获取导出预览（数据统计）
+router.get('/data/export/preview', authenticateAdmin, async (req, res) => {
+  try {
+    const stats = await dataTransferService.getExportPreview()
+    return res.json({
+      success: true,
+      data: stats
+    })
+  } catch (error) {
+    logger.error('❌ Failed to get export preview:', error)
+    return res.status(500).json({
+      error: 'Failed to get export preview',
+      message: error.message
+    })
+  }
+})
+
+// 导出数据
+router.post('/data/export', authenticateAdmin, async (req, res) => {
+  try {
+    const { types = ['all'], includeStats = false, decrypt = false } = req.body
+
+    const exportDataObj = await dataTransferService.exportData({
+      types: Array.isArray(types) ? types : [types],
+      includeStats,
+      decrypt
+    })
+
+    // 设置响应头，返回JSON文件下载
+    const filename = `backup-${new Date().toISOString().split('T')[0]}.json`
+    res.setHeader('Content-Type', 'application/json; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`)
+
+    // 返回JSON字符串
+    return res.send(JSON.stringify(exportDataObj, null, 2))
+  } catch (error) {
+    logger.error('❌ Failed to export data:', error)
+    return res.status(500).json({
+      error: 'Failed to export data',
+      message: error.message
+    })
+  }
+})
+
+// 导入数据
+router.post('/data/import', authenticateAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'No file uploaded',
+        message: 'Please upload a JSON file'
+      })
+    }
+
+    const { force = false, skipConflicts = false, types = ['all'] } = req.body
+
+    // 读取文件内容
+    const fileContent = await fs.promises.readFile(req.file.path, 'utf8')
+    
+    // 删除临时文件
+    await fs.promises.unlink(req.file.path).catch(() => {})
+
+    // 解析JSON
+    let importDataObj
+    try {
+      importDataObj = JSON.parse(fileContent)
+    } catch (parseError) {
+      return res.status(400).json({
+        error: 'Invalid JSON file',
+        message: 'The uploaded file is not valid JSON'
+      })
+    }
+
+    // 导入数据
+    const stats = await dataTransferService.importData(importDataObj, {
+      force: force === true || force === 'true',
+      skipConflicts: skipConflicts === true || skipConflicts === 'true',
+      types: Array.isArray(types) ? types : types.split(',')
+    })
+
+    return res.json({
+      success: true,
+      message: 'Data imported successfully',
+      stats
+    })
+  } catch (error) {
+    logger.error('❌ Failed to import data:', error)
+    return res.status(500).json({
+      error: 'Failed to import data',
+      message: error.message
+    })
+  }
+})
+
 // 🤖 OpenAI 账户管理
 
 // OpenAI OAuth 配置
