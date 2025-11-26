@@ -108,7 +108,7 @@ class UserService {
   async getUserByEmail(email) {
     try {
       const client = redis.getClientSafe()
-      
+
       // 查找所有用户
       const ldapKeys = await client.keys(`${this.userPrefix}*`)
       const clientKeys = await client.keys(`client_user:*`)
@@ -124,7 +124,7 @@ class UserService {
           const userData = await client.get(key)
           if (userData) {
             let user = JSON.parse(userData)
-            
+
             // 检查邮箱是否匹配（不区分大小写）
             if (user.email && user.email.toLowerCase() === email.toLowerCase()) {
               // 处理客户端用户：转换为统一格式
@@ -143,7 +143,7 @@ class UserService {
                   lastLoginAt: user.lastLoginAt || null
                 }
               }
-              
+
               return user
             }
           }

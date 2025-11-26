@@ -60,11 +60,11 @@ router.delete('/orders/:id', authenticateAdmin, async (req, res) => {
 router.post('/orders', authenticateAdmin, async (req, res) => {
   try {
     const { planId, userEmail } = req.body
-    
+
     if (!planId) {
       return res.status(400).json({ success: false, error: 'planId is required' })
     }
-    
+
     if (!userEmail) {
       return res.status(400).json({ success: false, error: 'userEmail is required' })
     }
@@ -72,14 +72,16 @@ router.post('/orders', authenticateAdmin, async (req, res) => {
     // 按邮箱查询用户
     const userService = require('../services/userService')
     const user = await userService.getUserByEmail(userEmail)
-    
+
     if (!user) {
-      return res.status(404).json({ success: false, error: `User with email ${userEmail} not found` })
+      return res
+        .status(404)
+        .json({ success: false, error: `User with email ${userEmail} not found` })
     }
 
     const userUsername = user.username || user.email || user.id
     const order = await orderService.createOrder(user.id, userUsername, planId)
-    
+
     res.json({ success: true, data: order })
   } catch (error) {
     logger.error('Failed to create order by admin:', error)

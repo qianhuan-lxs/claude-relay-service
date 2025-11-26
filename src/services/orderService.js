@@ -25,18 +25,20 @@ class OrderService {
 
       // 幂等性校验：检查是否已有同一用户同一套餐的待激活订单
       const existingOrder = await redis.getPendingOrderByUserAndPlan(userId, planId)
-      
+
       if (existingOrder) {
         // 如果已存在待激活订单，更新过期时间（3天后）
         const expiresAt = new Date()
         expiresAt.setDate(expiresAt.getDate() + 3)
-        
+
         await redis.updateOrder(existingOrder.id, {
           expiresAt: expiresAt.toISOString(),
           createdAt: new Date().toISOString() // 更新创建时间
         })
-        
-        logger.info(`✅ Updated existing order: ${existingOrder.id} for user ${userUsername}, plan: ${plan.name}`)
+
+        logger.info(
+          `✅ Updated existing order: ${existingOrder.id} for user ${userUsername}, plan: ${plan.name}`
+        )
         return await redis.getOrder(existingOrder.id)
       }
 
