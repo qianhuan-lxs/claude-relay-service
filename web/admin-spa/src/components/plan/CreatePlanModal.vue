@@ -501,11 +501,15 @@ const templateForm = ref({
 
 const speedMultiplier = computed(() => {
   if (form.value.type === 'monthly') {
-    if (!form.value.dailyLimitActual || form.value.dailyLimitActual === 0) return 1
-    return form.value.dailyLimitDisplay / form.value.dailyLimitActual
+    const dailyLimitActual = parseFloat(form.value.dailyLimitActual) || 0
+    const dailyLimitDisplay = parseFloat(form.value.dailyLimitDisplay) || 0
+    if (!dailyLimitActual || dailyLimitActual === 0) return 1
+    return dailyLimitDisplay / dailyLimitActual
   } else {
-    if (!form.value.totalLimitActual || form.value.totalLimitActual === 0) return 1
-    return form.value.totalLimitDisplay / form.value.totalLimitActual
+    const totalLimitActual = parseFloat(form.value.totalLimitActual) || 0
+    const totalLimitDisplay = parseFloat(form.value.totalLimitDisplay) || 0
+    if (!totalLimitActual || totalLimitActual === 0) return 1
+    return totalLimitDisplay / totalLimitActual
   }
 })
 
@@ -651,12 +655,12 @@ watch(
       form.value = {
         name: plan.name || '',
         type: plan.type || 'monthly',
-        price: plan.price || 0,
-        duration: plan.duration || 30,
-        dailyLimitActual: plan.dailyLimitActual || 0,
-        dailyLimitDisplay: plan.dailyLimitDisplay || 0,
-        totalLimitActual: plan.totalLimitActual || 0,
-        totalLimitDisplay: plan.totalLimitDisplay || 0,
+        price: parseFloat(plan.price) || 0,
+        duration: parseInt(plan.duration) || 30,
+        dailyLimitActual: parseFloat(plan.dailyLimitActual) || 0,
+        dailyLimitDisplay: parseFloat(plan.dailyLimitDisplay) || 0,
+        totalLimitActual: parseFloat(plan.totalLimitActual) || 0,
+        totalLimitDisplay: parseFloat(plan.totalLimitDisplay) || 0,
         description: plan.description || '',
         xianyuLink: plan.xianyuLink || ''
       }

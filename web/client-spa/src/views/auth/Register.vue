@@ -81,19 +81,19 @@
             <ul class="text-xs text-gray-400 mt-2 space-y-1 ml-10">
               <li class="flex items-center gap-2">
                 <span :class="password.length >= 8 ? 'text-green-400' : ''">•</span>
-                至少8个字符
+                至少8个字符（建议）
               </li>
               <li class="flex items-center gap-2">
                 <span :class="/[A-Z]/.test(password) ? 'text-green-400' : ''">•</span>
-                包含大写字母
+                包含大写字母（建议）
               </li>
               <li class="flex items-center gap-2">
                 <span :class="/[a-z]/.test(password) ? 'text-green-400' : ''">•</span>
-                包含小写字母
+                包含小写字母（建议）
               </li>
               <li class="flex items-center gap-2">
                 <span :class="/[0-9]/.test(password) ? 'text-green-400' : ''">•</span>
-                包含数字
+                包含数字（建议）
               </li>
             </ul>
           </div>
@@ -166,13 +166,9 @@ const password = ref('')
 const confirm = ref('')
 
 const canSubmit = computed(() => {
-  return (
-    password.value.length >= 8 &&
-    /[A-Z]/.test(password.value) &&
-    /[a-z]/.test(password.value) &&
-    /[0-9]/.test(password.value) &&
-    password.value === confirm.value
-  )
+  // 只检查基本条件：密码不为空且确认密码匹配
+  // 密码强度检查只是提示，不影响提交
+  return password.value.length > 0 && password.value === confirm.value
 })
 
 const loading = ref(false)
