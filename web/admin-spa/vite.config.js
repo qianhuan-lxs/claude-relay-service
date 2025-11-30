@@ -51,7 +51,11 @@ export default defineConfig(({ mode }) => {
         imports: ['vue', 'vue-router', 'pinia']
       }),
       Components({
-        resolvers: [ElementPlusResolver()]
+        resolvers: [ElementPlusResolver()],
+        // 排除 user 目录，避免与 apikeys 目录中的同名组件冲突
+        // user 目录中的组件已经手动导入
+        dirs: ['src/components/apikeys', 'src/components/accounts', 'src/components/admin', 'src/components/common', 'src/components/layout', 'src/components/plan'],
+        exclude: [/[\\/]user[\\/]/]
       })
     ],
     resolve: {
