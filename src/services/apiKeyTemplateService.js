@@ -205,6 +205,9 @@ class ApiKeyTemplateService {
         rateLimitWindow: template.rateLimitWindow,
         rateLimitRequests: template.rateLimitRequests,
         rateLimitCost: template.rateLimitCost,
+        dailyCostLimit: template.dailyCostLimit || 0, // 从模板获取每日费用限额
+        totalCostLimit: template.totalCostLimit || 0, // 从模板获取总费用限额
+        weeklyOpusCostLimit: template.weeklyOpusCostLimit || 0, // 从模板获取每周 Opus 费用限额
         claudeAccountId: template.claudeAccountId || '',
         claudeConsoleAccountId: template.claudeConsoleAccountId || '',
         geminiAccountId: template.geminiAccountId || '',

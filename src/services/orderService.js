@@ -150,16 +150,13 @@ class OrderService {
         throw new Error(`API Key template for plan ${order.planId} not found`)
       }
 
-      // 准备覆盖配置（根据套餐类型设置限额）
-      const overrides = {}
-      if (plan.type === 'monthly') {
-        overrides.dailyCostLimit = plan.dailyLimitActual
-      } else if (plan.type === 'usage') {
-        overrides.totalCostLimit = plan.totalLimitActual
+      // 准备覆盖配置
+      // 注意：不再覆盖模板中的 dailyCostLimit 和 totalCostLimit
+      // 因为模板中的值已经考虑了倍速等因素，应该直接使用模板中的值
+      const overrides = {
+        // 添加订单ID关联，用于费用倍速计算
+        orderId: orderId
       }
-
-      // 添加订单ID关联，用于费用倍速计算
-      overrides.orderId = orderId
 
       // 生成 API Key 名称：套餐名+用户名+订单号前四位
       const orderIdPrefix = orderId.substring(0, 4)

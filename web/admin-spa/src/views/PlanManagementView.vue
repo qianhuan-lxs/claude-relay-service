@@ -128,6 +128,17 @@
       @close="handleModalClose"
       @success="handlePlanSuccess"
     />
+
+    <!-- 确认对话框 -->
+    <ConfirmModal
+      :cancel-text="confirmOptions.cancelText"
+      :confirm-text="confirmOptions.confirmText"
+      :message="confirmOptions.message"
+      :show="showConfirmModal"
+      :title="confirmOptions.title"
+      @cancel="handleCancel"
+      @confirm="handleConfirm"
+    />
   </div>
 </template>
 
@@ -136,9 +147,10 @@ import { ref, onMounted } from 'vue'
 import { apiClient } from '@/config/api'
 import { showToast } from '@/utils/toast'
 import CreatePlanModal from '@/components/plan/CreatePlanModal.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import { useConfirm } from '@/composables/useConfirm'
 
-const { showConfirm } = useConfirm()
+const { showConfirmModal, confirmOptions, showConfirm, handleConfirm, handleCancel } = useConfirm()
 
 const loading = ref(false)
 const plans = ref([])
@@ -165,18 +177,25 @@ const editPlan = (plan) => {
 }
 
 const deletePlan = async (planId) => {
-  const confirmed = await showConfirm({
-    title: '确认删除',
-    message: '确定要删除这个套餐吗？此操作不可恢复。'
-  })
-
-  if (!confirmed) return
-
+  console.log('deletePlan called with planId:', planId)
   try {
+    const confirmed = await showConfirm({
+      title: '确认删除',
+      message: '确定要删除这个套餐吗？此操作不可恢复。'
+    })
+    console.log('User confirmed:', confirmed)
+
+    if (!confirmed) {
+      console.log('User cancelled deletion')
+      return
+    }
+
     const response = await apiClient.delete(`/admin/plans/${planId}`)
     if (response && response.success) {
       showToast('套餐删除成功', 'success')
       await loadPlans()
+    } else {
+      showToast('删除套餐失败', 'error')
     }
   } catch (error) {
     showToast('删除套餐失败', 'error')
