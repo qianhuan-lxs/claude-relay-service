@@ -9,36 +9,42 @@ class ClientInputValidator {
    */
   static validateUsername(username) {
     if (!username || typeof username !== 'string') {
-      throw new Error('Username is required')
+      throw new Error('用户名不能为空')
     }
 
     const trimmedUsername = username.trim()
 
     if (trimmedUsername.length < 3) {
-      throw new Error('Username must be at least 3 characters long')
+      throw new Error('用户名至少需要3个字符')
     }
 
     if (trimmedUsername.length > 30) {
-      throw new Error('Username must be no more than 30 characters long')
+      throw new Error('用户名不能超过30个字符')
     }
 
-    // Allow alphanumeric characters and underscores only
-    const usernameRegex = /^[a-zA-Z0-9_]+$/
+    // Allow alphanumeric characters, underscores, and Chinese characters
+    // Unicode ranges: \u4e00-\u9fa5 (CJK统一汉字), \u3400-\u4db5 (CJK扩展A)
+    const usernameRegex = /^[a-zA-Z0-9_\u4e00-\u9fa5\u3400-\u4db5]+$/
     if (!usernameRegex.test(trimmedUsername)) {
-      throw new Error('Username can only contain letters, numbers, and underscores')
+      throw new Error('用户名只能包含字母、数字、下划线和中文')
     }
 
     // Cannot start with underscore
     if (trimmedUsername.startsWith('_')) {
-      throw new Error('Username cannot start with an underscore')
+      throw new Error('用户名不能以下划线开头')
     }
 
     // Cannot end with underscore
     if (trimmedUsername.endsWith('_')) {
-      throw new Error('Username cannot end with an underscore')
+      throw new Error('用户名不能以下划线结尾')
     }
 
-    return trimmedUsername.toLowerCase()
+    // 对于包含中文的用户名，不转换为小写（保持原样）
+    // 对于纯英文的用户名，转换为小写
+    if (/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+      return trimmedUsername.toLowerCase()
+    }
+    return trimmedUsername
   }
 
   /**
@@ -49,17 +55,17 @@ class ClientInputValidator {
    */
   static validateEmail(email) {
     if (!email || typeof email !== 'string') {
-      throw new Error('Email is required')
+      throw new Error('邮箱地址不能为空')
     }
 
     const trimmedEmail = email.trim().toLowerCase()
 
     if (trimmedEmail.length === 0) {
-      throw new Error('Email cannot be empty')
+      throw new Error('邮箱地址不能为空')
     }
 
     if (trimmedEmail.length > 254) {
-      throw new Error('Email is too long')
+      throw new Error('邮箱地址过长')
     }
 
     // RFC 5322 compliant email regex (simplified but robust)
@@ -67,16 +73,16 @@ class ClientInputValidator {
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
     if (!emailRegex.test(trimmedEmail)) {
-      throw new Error('Invalid email format')
+      throw new Error('邮箱格式无效')
     }
 
     // Additional checks
     if (trimmedEmail.includes('..')) {
-      throw new Error('Email cannot contain consecutive dots')
+      throw new Error('邮箱地址不能包含连续的点')
     }
 
     if (trimmedEmail.startsWith('.') || trimmedEmail.endsWith('.')) {
-      throw new Error('Email cannot start or end with a dot')
+      throw new Error('邮箱地址不能以点开头或结尾')
     }
 
     return trimmedEmail
@@ -90,46 +96,17 @@ class ClientInputValidator {
    */
   static validatePassword(password) {
     if (!password || typeof password !== 'string') {
-      throw new Error('Password is required')
+      throw new Error('密码不能为空')
     }
 
-    if (password.length < 8) {
-      throw new Error('Password must be at least 8 characters long')
+    // 只检查基本要求：长度
+    // 其他要求（大小写、数字等）只是建议，不在后端强制验证
+    if (password.length < 1) {
+      throw new Error('密码不能为空')
     }
 
     if (password.length > 128) {
-      throw new Error('Password is too long (maximum 128 characters)')
-    }
-
-    // Check for common weak patterns
-    if (password === password.toLowerCase()) {
-      throw new Error('Password must contain at least one uppercase letter')
-    }
-
-    if (password === password.toUpperCase()) {
-      throw new Error('Password must contain at least one lowercase letter')
-    }
-
-    if (!/\d/.test(password)) {
-      throw new Error('Password must contain at least one number')
-    }
-
-    // Check for common weak passwords
-    const commonPasswords = [
-      'password',
-      '123456',
-      '123456789',
-      'qwerty',
-      'abc123',
-      'password123',
-      'admin',
-      'letmein',
-      'welcome',
-      'monkey'
-    ]
-
-    if (commonPasswords.includes(password.toLowerCase())) {
-      throw new Error('Password is too common, please choose a stronger password')
+      throw new Error('密码过长（最多128个字符）')
     }
 
     return password
@@ -146,7 +123,7 @@ class ClientInputValidator {
    */
   static validateRegistrationInput(input) {
     if (!input || typeof input !== 'object') {
-      throw new Error('Registration data is required')
+      throw new Error('注册数据不能为空')
     }
 
     const { username, email, password } = input
@@ -177,21 +154,28 @@ class ClientInputValidator {
    */
   static validateLoginInput(input) {
     if (!input || typeof input !== 'object') {
-      throw new Error('Login data is required')
+      throw new Error('登录数据不能为空')
     }
 
     const { username, password } = input
 
     if (!username || typeof username !== 'string' || username.trim().length === 0) {
-      throw new Error('Username or email is required')
+      throw new Error('用户名或邮箱不能为空')
     }
 
     if (!password || typeof password !== 'string' || password.length === 0) {
-      throw new Error('Password is required')
+      throw new Error('密码不能为空')
     }
 
+    // 对于包含中文的用户名，不转换为小写（保持原样）
+    // 对于纯英文的用户名，转换为小写
+    const trimmedUsername = username.trim()
+    const normalizedUsername = /^[a-zA-Z0-9_]+$/.test(trimmedUsername)
+      ? trimmedUsername.toLowerCase()
+      : trimmedUsername
+
     return {
-      username: username.trim().toLowerCase(),
+      username: normalizedUsername,
       password
     }
   }
