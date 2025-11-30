@@ -26,12 +26,20 @@ class PlanService {
       const { type, dailyLimitDisplay, dailyLimitActual, totalLimitDisplay, totalLimitActual } =
         planData
 
-      // 计算倍速
+      // 计算倍速：如果用户手动指定了，使用手动值；否则自动计算
       let speedMultiplier = 1
-      if (type === 'monthly') {
-        speedMultiplier = this.calculateSpeedMultiplier(dailyLimitDisplay, dailyLimitActual)
-      } else if (type === 'usage') {
-        speedMultiplier = this.calculateSpeedMultiplier(totalLimitDisplay, totalLimitActual)
+      if (planData.speedMultiplier !== undefined && planData.speedMultiplier !== null && planData.speedMultiplier > 0) {
+        // 用户手动指定了倍速，使用手动值
+        speedMultiplier = parseFloat(planData.speedMultiplier)
+        logger.debug(`✅ Using manual speedMultiplier: ${speedMultiplier}`)
+      } else {
+        // 自动计算倍速
+        if (type === 'monthly') {
+          speedMultiplier = this.calculateSpeedMultiplier(dailyLimitDisplay, dailyLimitActual)
+        } else if (type === 'usage') {
+          speedMultiplier = this.calculateSpeedMultiplier(totalLimitDisplay, totalLimitActual)
+        }
+        logger.debug(`✅ Calculated speedMultiplier: ${speedMultiplier}`)
       }
 
       const planId = planData.id || uuidv4()
@@ -176,16 +184,22 @@ class PlanService {
 
         // 调试日志
         logger.debug(
-          `🔍 Updating monthly plan ${planId}: dailyLimitDisplay=${dailyLimitDisplay}, dailyLimitActual=${dailyLimitActual}, existingPlan.dailyLimitDisplay=${existingPlan.dailyLimitDisplay}, existingPlan.dailyLimitActual=${existingPlan.dailyLimitActual}, planData.dailyLimitDisplay=${planData.dailyLimitDisplay}, planData.dailyLimitActual=${planData.dailyLimitActual}`
+          `🔍 Updating monthly plan ${planId}: dailyLimitDisplay=${dailyLimitDisplay}, dailyLimitActual=${dailyLimitActual}, existingPlan.dailyLimitDisplay=${existingPlan.dailyLimitDisplay}, existingPlan.dailyLimitActual=${existingPlan.dailyLimitActual}, planData.dailyLimitDisplay=${planData.dailyLimitDisplay}, planData.dailyLimitActual=${planData.dailyLimitActual}, planData.speedMultiplier=${planData.speedMultiplier}`
         )
 
-        // 重新计算倍速（使用正确的值）
-        planData.speedMultiplier = this.calculateSpeedMultiplier(
-          dailyLimitDisplay,
-          dailyLimitActual
-        )
-
-        logger.debug(`🔍 Calculated speedMultiplier: ${planData.speedMultiplier}`)
+        // 重新计算倍速：如果用户手动指定了，使用手动值；否则自动计算
+        if (planData.speedMultiplier !== undefined && planData.speedMultiplier !== null && planData.speedMultiplier > 0) {
+          // 用户手动指定了倍速，使用手动值
+          planData.speedMultiplier = parseFloat(planData.speedMultiplier)
+          logger.debug(`✅ Using manual speedMultiplier: ${planData.speedMultiplier}`)
+        } else {
+          // 自动计算倍速
+          planData.speedMultiplier = this.calculateSpeedMultiplier(
+            dailyLimitDisplay,
+            dailyLimitActual
+          )
+          logger.debug(`✅ Calculated speedMultiplier: ${planData.speedMultiplier}`)
+        }
 
         // 确保更新 planData 中的字段值（用于保存到 Redis）
         planData.dailyLimitDisplay = dailyLimitDisplay
@@ -211,11 +225,19 @@ class PlanService {
           totalLimitActual = parseFloat(existingPlan.totalLimitActual) || 0
         }
 
-        // 重新计算倍速（使用正确的值）
-        planData.speedMultiplier = this.calculateSpeedMultiplier(
-          totalLimitDisplay,
-          totalLimitActual
-        )
+        // 重新计算倍速：如果用户手动指定了，使用手动值；否则自动计算
+        if (planData.speedMultiplier !== undefined && planData.speedMultiplier !== null && planData.speedMultiplier > 0) {
+          // 用户手动指定了倍速，使用手动值
+          planData.speedMultiplier = parseFloat(planData.speedMultiplier)
+          logger.debug(`✅ Using manual speedMultiplier: ${planData.speedMultiplier}`)
+        } else {
+          // 自动计算倍速
+          planData.speedMultiplier = this.calculateSpeedMultiplier(
+            totalLimitDisplay,
+            totalLimitActual
+          )
+          logger.debug(`✅ Calculated speedMultiplier: ${planData.speedMultiplier}`)
+        }
 
         // 确保更新 planData 中的字段值（用于保存到 Redis）
         planData.totalLimitDisplay = totalLimitDisplay

@@ -176,7 +176,27 @@
                   type="number"
                 />
                 <p class="mt-1 text-xs text-gray-500">
-                  倍速将自动计算：{{ speedMultiplier.toFixed(2) }}x
+                  倍速将自动计算：{{ calculatedSpeedMultiplier.toFixed(2) }}x
+                </p>
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  倍速（可选，手动指定）
+                </label>
+                <input
+                  v-model.number="form.speedMultiplier"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  max="100"
+                  min="0.1"
+                  :placeholder="`自动计算值：${calculatedSpeedMultiplier.toFixed(2)}x`"
+                  step="0.01"
+                  type="number"
+                />
+                <p class="mt-1 text-xs text-gray-500">
+                  留空则使用自动计算值（{{
+                    calculatedSpeedMultiplier.toFixed(2)
+                  }}x），或手动指定倍速
                 </p>
               </div>
 
@@ -224,7 +244,27 @@
                   type="number"
                 />
                 <p class="mt-1 text-xs text-gray-500">
-                  倍速将自动计算：{{ speedMultiplier.toFixed(2) }}x
+                  倍速将自动计算：{{ calculatedSpeedMultiplier.toFixed(2) }}x
+                </p>
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  倍速（可选，手动指定）
+                </label>
+                <input
+                  v-model.number="form.speedMultiplier"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  max="100"
+                  min="0.1"
+                  :placeholder="`自动计算值：${calculatedSpeedMultiplier.toFixed(2)}x`"
+                  step="0.01"
+                  type="number"
+                />
+                <p class="mt-1 text-xs text-gray-500">
+                  留空则使用自动计算值（{{
+                    calculatedSpeedMultiplier.toFixed(2)
+                  }}x），或手动指定倍速
                 </p>
               </div>
             </template>
@@ -499,7 +539,8 @@ const templateForm = ref({
   description: ''
 })
 
-const speedMultiplier = computed(() => {
+// 计算倍速（用于显示）
+const calculatedSpeedMultiplier = computed(() => {
   if (form.value.type === 'monthly') {
     const dailyLimitActual = parseFloat(form.value.dailyLimitActual) || 0
     const dailyLimitDisplay = parseFloat(form.value.dailyLimitDisplay) || 0
@@ -511,6 +552,19 @@ const speedMultiplier = computed(() => {
     if (!totalLimitActual || totalLimitActual === 0) return 1
     return totalLimitDisplay / totalLimitActual
   }
+})
+
+// 最终使用的倍速：如果用户手动指定了，使用手动值；否则使用计算值
+// eslint-disable-next-line no-unused-vars
+const speedMultiplier = computed(() => {
+  if (
+    form.value.speedMultiplier !== null &&
+    form.value.speedMultiplier !== undefined &&
+    form.value.speedMultiplier > 0
+  ) {
+    return parseFloat(form.value.speedMultiplier)
+  }
+  return calculatedSpeedMultiplier.value
 })
 
 const handleTypeChange = () => {
@@ -527,7 +581,50 @@ const handleTypeChange = () => {
 
 const nextStep = () => {
   if (currentStep.value < 3) {
+    // 当从步骤1进入步骤2时，自动填充 API Key 模板字段
+    if (currentStep.value === 1) {
+      autoFillTemplateForm()
+    }
     currentStep.value++
+  }
+}
+
+// 自动填充 API Key 模板表单
+const autoFillTemplateForm = () => {
+  const hasManualSpeedMultiplier =
+    form.value.speedMultiplier !== null &&
+    form.value.speedMultiplier !== undefined &&
+    form.value.speedMultiplier > 0
+  const multiplier = hasManualSpeedMultiplier
+    ? parseFloat(form.value.speedMultiplier)
+    : calculatedSpeedMultiplier.value
+
+  if (form.value.type === 'monthly') {
+    // 月卡类型
+    const dailyLimitActual = parseFloat(form.value.dailyLimitActual) || 0
+    const dailyLimitDisplay = parseFloat(form.value.dailyLimitDisplay) || 0
+
+    if (hasManualSpeedMultiplier) {
+      // 如果填写了倍速：使用实际额度 * 倍速
+      templateForm.value.dailyCostLimit = dailyLimitActual * multiplier
+      templateForm.value.totalCostLimit = dailyLimitActual * multiplier * 30
+    } else {
+      // 如果未填写倍速：使用显示额度
+      templateForm.value.dailyCostLimit = dailyLimitDisplay
+      templateForm.value.totalCostLimit = dailyLimitDisplay * 30
+    }
+  } else if (form.value.type === 'usage') {
+    // 计量类型
+    const totalLimitActual = parseFloat(form.value.totalLimitActual) || 0
+    const totalLimitDisplay = parseFloat(form.value.totalLimitDisplay) || 0
+
+    if (hasManualSpeedMultiplier) {
+      // 如果填写了倍速：使用实际额度 * 倍速
+      templateForm.value.totalCostLimit = totalLimitActual * multiplier
+    } else {
+      // 如果未填写倍速：使用显示额度
+      templateForm.value.totalCostLimit = totalLimitDisplay
+    }
   }
 }
 
@@ -648,6 +745,26 @@ const loadTemplateData = async (templateId) => {
 }
 
 // 初始化编辑数据
+// 监听步骤1的字段变化，如果在步骤2，自动更新模板表单
+watch(
+  [
+    () => form.value.type,
+    () => form.value.dailyLimitDisplay,
+    () => form.value.dailyLimitActual,
+    () => form.value.totalLimitDisplay,
+    () => form.value.totalLimitActual,
+    () => form.value.speedMultiplier,
+    () => currentStep.value
+  ],
+  () => {
+    // 只有在步骤2时才自动更新
+    if (currentStep.value === 2) {
+      autoFillTemplateForm()
+    }
+  },
+  { deep: true }
+)
+
 watch(
   () => props.plan,
   async (plan) => {
@@ -661,6 +778,7 @@ watch(
         dailyLimitDisplay: parseFloat(plan.dailyLimitDisplay) || 0,
         totalLimitActual: parseFloat(plan.totalLimitActual) || 0,
         totalLimitDisplay: parseFloat(plan.totalLimitDisplay) || 0,
+        speedMultiplier: plan.speedMultiplier ? parseFloat(plan.speedMultiplier) : null,
         description: plan.description || '',
         xianyuLink: plan.xianyuLink || ''
       }
